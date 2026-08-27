@@ -253,53 +253,46 @@ class Repository:
     start: datetime | None,
     end: datetime,
     ) -> dict[str, Any]:
-        """Per-inverter generated energy (kWh) over a window, from the
-        lifetime_energy_kwh cumulative counter (last - first sample in range).
-
-        When start is None ("all"), returns each inverter's true lifetime
-        total (latest cumulative reading) instead of a delta — mirroring
-        lifetime_pv_energy() at the site level.
-        """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
-            """
-            WITH samples AS (
-                SELECT d.pvs_path_id, m.time, m.value
-                FROM devices d
-                JOIN measurements m ON m.device_id = d.id
-                WHERE d.site_id = $1::uuid
-                  AND d.device_type = 'inverter'
-                  AND m.metric = 'lifetime_energy_kwh'
-                  AND m.time < $3
-                  AND ($2::timestamptz IS NULL OR m.time >= $2)
-            ),
-            ranked AS (
-                SELECT pvs_path_id, time, value,
-                       ROW_NUMBER() OVER (PARTITION BY pvs_path_id ORDER BY time ASC) AS first_rank,
-                       ROW_NUMBER() OVER (PARTITION BY pvs_path_id ORDER BY time DESC) AS last_rank
-                FROM samples
+                """
+                WITH samples AS (
+                    SELECT d.pvs_path_id, m.time, m.value
+                    FROM devices d
+                    JOIN measurements m ON m.device_id = d.id
+                    WHERE d.site_id = $1::uuid
+                    AND d.device_type = 'inverter'
+                    AND m.metric = 'lifetime_energy_kwh'
+                    AND m.time < $3
+                    AND ($2::timestamptz IS NULL OR m.time >= $2)
+                ),
+                ranked AS (
+                    SELECT pvs_path_id, time, value,
+                        ROW_NUMBER() OVER (PARTITION BY pvs_path_id ORDER BY time ASC) AS first_rank
+                    FROM samples
+                )
+                SELECT
+                    s.pvs_path_id,
+                    MAX(r.value) FILTER (WHERE r.first_rank = 1) AS first_value,
+                    MAX(s.value) AS max_value
+                FROM samples s
+                LEFT JOIN ranked r ON r.pvs_path_id = s.pvs_path_id AND r.first_rank = 1
+                GROUP BY s.pvs_path_id
+                """,
+                HOME_SITE_ID,
+                start,
+                end,
             )
-            SELECT
-                pvs_path_id,
-                MAX(value) FILTER (WHERE first_rank = 1) AS first_value,
-                MAX(value) FILTER (WHERE last_rank = 1) AS last_value
-            FROM ranked
-            GROUP BY pvs_path_id
-            """,
-            HOME_SITE_ID,
-            start,
-            end,
-        )
 
         values: dict[str, float | None] = {}
         for row in rows:
-            first_v, last_v = row["first_value"], row["last_value"]
-            if first_v is None or last_v is None:
+            first_v, max_v = row["first_value"], row["max_value"]
+            if max_v is None:
                 values[str(row["pvs_path_id"])] = None
             elif start is None:
-                values[str(row["pvs_path_id"])] = round(float(last_v), 3)
+                values[str(row["pvs_path_id"])] = round(float(max_v), 3)
             else:
-                values[str(row["pvs_path_id"])] = round(max(0.0, float(last_v) - float(first_v)), 3)
+                values[str(row["pvs_path_id"])] = round(max(0.0, float(max_v) - float(first_v)), 3)
 
         return {
             "start": start.isoformat() if start else None,
