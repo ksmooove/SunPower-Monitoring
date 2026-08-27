@@ -35,6 +35,43 @@ app.add_middleware(
 _pool: asyncpg.Pool | None = None
 
 
+def selected_period_dates(
+    range_name: str,
+    period: str | None,
+    today: date,
+) -> tuple[date | None, date]:
+    if not period or range_name == "all":
+        if range_name == "day":
+            return today, today
+        if range_name == "week":
+            return today - timedelta(days=6), today
+        if range_name == "month":
+            return today.replace(day=1), today
+        if range_name == "year":
+            return today.replace(month=1, day=1), today
+        return None, today
+
+    try:
+        if range_name == "day":
+            selected = datetime.strptime(period, "%Y-%m-%d").date()
+            return selected, selected
+        if range_name == "week":
+            year, week = period.split("-W")
+            selected = date.fromisocalendar(int(year), int(week), 1)
+            return selected, selected + timedelta(days=6)
+        if range_name == "month":
+            selected = datetime.strptime(period, "%Y-%m").date().replace(day=1)
+            next_month = (selected.replace(day=28) + timedelta(days=4)).replace(day=1)
+            return selected, next_month - timedelta(days=1)
+        if range_name == "year":
+            selected = datetime.strptime(period, "%Y").date().replace(month=1, day=1)
+            return selected, selected.replace(year=selected.year + 1) - timedelta(days=1)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail=f"invalid period for {range_name}: {period}")
+
+    raise HTTPException(status_code=400, detail=f"invalid range: {range_name}")
+
+
 async def get_pool() -> asyncpg.Pool:
     if _pool is None:
         raise HTTPException(status_code=503, detail="database pool not ready")
@@ -162,6 +199,7 @@ async def day_summary(
 async def production_history(
     repo: Annotated[Repository, Depends(get_repo)],
     range: str = Query("week", pattern="^(day|week|month|year|all)$"),
+    period: str | None = Query(None, max_length=10),
 ) -> dict[str, Any]:
     """
     Calendar-based solar production history.
@@ -176,25 +214,7 @@ async def production_history(
     zone = ZoneInfo(settings.site_timezone)
     today = datetime.now(zone).date()
 
-    if range == "day":
-        start_date: date | None = today
-        end_date = today
-
-    elif range == "week":
-        start_date = today - timedelta(days=6)
-        end_date = today
-
-    elif range == "month":
-        start_date = today.replace(day=1)
-        end_date = today
-
-    elif range == "year":
-        start_date = today.replace(month=1, day=1)
-        end_date = today
-
-    else:  # all
-        start_date = None
-        end_date = today
+    start_date, end_date = selected_period_dates(range, period, today)
 
     daily_points = await repo.production_energy_by_day(
         start_date=start_date,
@@ -270,6 +290,7 @@ async def production_history(
 
     return {
         "range": range,
+        "period": period,
         "timezone": settings.site_timezone,
         "bucket": bucket,
         "total_kwh": round(total_kwh, 3),

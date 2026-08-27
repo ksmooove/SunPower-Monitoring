@@ -50,6 +50,7 @@ export default function App() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [daySummary, setDaySummary] = useState<DaySummary | null>(null);
   const [productionRange, setProductionRange] = useState<ProductionRange>("week");
+  const [productionPeriod, setProductionPeriod] = useState<string | undefined>();
   const [panelRange, setPanelRange] = useState<ProductionRange>("week");
   const [productionHistory, setProductionHistory] = useState<ProductionHistoryResponse | null>(null);
   const [inverterSummary, setInverterSummary] = useState<InverterSummaryResponse | null>(null);
@@ -62,6 +63,11 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [csvBusy, setCsvBusy] = useState(false);
   const [tokenInput, setTokenInput] = useState(getApiToken());
+
+  function changeProductionRange(range: ProductionRange) {
+    setProductionRange(range);
+    setProductionPeriod(undefined);
+  }
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -78,7 +84,7 @@ export default function App() {
         api.history("pv_power_kw", hours),
         api.daySummary(),
         api.playback(24),
-        api.productionHistory(productionRange),
+        api.productionHistory(productionRange, productionPeriod),
         api.inverterSummary(panelRange),
       ]);
       setHealth(h);
@@ -102,7 +108,7 @@ export default function App() {
     } finally {
       setRefreshing(false);
     }
-  }, [hours, panelRange, productionRange]);
+  }, [hours, panelRange, productionPeriod, productionRange]);
 
   useEffect(() => {
     void refresh();
@@ -193,7 +199,9 @@ export default function App() {
       <ProductionHistory
       data={productionHistory}
       range={productionRange}
-      onRangeChange={setProductionRange}
+      onRangeChange={changeProductionRange}
+      period={productionPeriod}
+      onPeriodChange={setProductionPeriod}
       />
 
       <PowerFlow
