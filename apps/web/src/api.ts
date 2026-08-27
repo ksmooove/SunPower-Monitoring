@@ -157,11 +157,12 @@ export type ProductionHistoryResponse = {
 export type InverterSummaryResponse = {
   range: ProductionRange;
   timezone: string;
-  unit: "W";
+  unit: "kWh";
+  is_lifetime: boolean;
   start: string | null;
   end: string;
-  values_w: Record<string, number | null>;
-  max_w: number;
+  values_kwh: Record<string, number | null>;
+  max_kwh: number;
 };
 
 export type PlaybackResponse = {

@@ -3,11 +3,11 @@ import type { CurrentResponse, Device, InverterSummaryResponse, ProductionRange 
 import { api } from "../api";
 
 /** Violet (low) → green (high); returns background and whether text should be light. */
-function powerStyle(powerKw: number | null, maxKw: number): { background: string; lightText: boolean } {
-  if (powerKw == null || maxKw <= 0) {
+function energyStyle(energyKwh: number | null, maxKwh: number): { background: string; lightText: boolean } {
+  if (energyKwh == null || maxKwh <= 0) {
     return { background: "color-mix(in srgb, var(--muted) 25%, transparent)", lightText: false };
   }
-  const t = Math.max(0, Math.min(1, powerKw / maxKw));
+  const t = Math.max(0, Math.min(1, energyKwh / maxKwh));
   const low = [108, 54, 168]; // violet
   const mid = [46, 140, 160]; // teal bridge
   const high = [46, 160, 90]; // green
@@ -46,13 +46,8 @@ export function Heatmap({
     () => devices.filter((d) => d.device_type === "inverter"),
     [devices],
   );
-  const powerByPath = useMemo(() => {
-    const m = new Map<string, number | null>();
-    for (const inv of current.inverters) m.set(inv.pvs_path_id, inv.power_kw);
-    return m;
-  }, [current.inverters]);
 
-  const maxKw = Math.max((summary?.max_w ?? 0) / 1000, 0.05);
+  const maxKwh = Math.max(summary?.max_kwh ?? 0, 0.01);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = inverters.find((d) => d.id === selectedId) ?? null;
@@ -78,14 +73,10 @@ export function Heatmap({
         device: d,
         row: d.grid_row ?? fallback.row,
         col: d.grid_col ?? fallback.col,
-        power: summary?.values_w[d.pvs_path_id] != null
-          ? summary.values_w[d.pvs_path_id]! / 1000
-          : summary
-            ? null
-            : powerByPath.get(d.pvs_path_id) ?? null,
+        energyKwh: summary?.values_kwh[d.pvs_path_id] ?? null,
       };
     });
-  }, [inverters, powerByPath, summary]);
+  }, [inverters, summary]);
 
   const rows = Math.max(4, ...placed.map((p) => p.row + 1));
 
@@ -108,14 +99,18 @@ export function Heatmap({
     }
   }
 
+  const subtitle = summary
+    ? summary.is_lifetime
+      ? `Lifetime energy generated · ${summary.timezone}`
+      : `Energy generated · ${summary.timezone}`
+    : "Loading panel history…";
+
   return (
     <section className="section">
       <div className="production-header">
         <div>
           <h2>Panel heatmap</h2>
-          <p className="muted production-subtitle">
-            {summary ? `Average generated power · ${summary.timezone}` : "Loading panel history…"}
-          </p>
+          <p className="muted production-subtitle">{subtitle}</p>
         </div>
         <div className="production-tabs">
           {(["day", "week", "month", "year", "all"] as ProductionRange[]).map((key) => (
@@ -132,16 +127,17 @@ export function Heatmap({
       </div>
       <div className="panel">
         <p className="muted" style={{ marginTop: 0 }}>
-          Violet = low power, green = high. Values are watts (W). Tap a panel to rename or move it —
-          physical roof layout is user-editable (not available via owner local API).
+          Violet = low energy, green = high. Values are kilowatt-hours (kWh) generated over the
+          selected range. Tap a panel to rename or move it — physical roof layout is user-editable
+          (not available via owner local API).
         </p>
         <div
           className="heatmap-grid"
           style={{ ["--cols" as string]: cols, gridTemplateRows: `repeat(${rows}, auto)` }}
         >
           {placed.map((p) => {
-            const style = powerStyle(p.power, maxKw);
-            const watts = p.power == null ? null : Math.round(p.power * 1000);
+            const style = energyStyle(p.energyKwh, maxKwh);
+            const kwh = p.energyKwh == null ? null : p.energyKwh.toFixed(2);
             return (
               <button
                 key={p.device.id}
@@ -156,64 +152,9 @@ export function Heatmap({
                 }}
                 onClick={() => setSelectedId(p.device.id)}
                 title={`${p.device.name ?? p.device.pvs_path_id}: ${
-                  watts == null ? "n/a" : `${watts} W`
+                  kwh == null ? "n/a" : `${kwh} kWh`
                 }`}
               >
                 <span className="w">
-                  {watts == null ? "—" : watts}
-                  {watts != null ? <span className="unit"> W</span> : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="legend">
-          <span>Low</span>
-          <div className="legend-bar legend-bar-violet-green" aria-hidden />
-          <span>High (W)</span>
-        </div>
-
-        {selected && (
-          <div className="detail">
-            <strong>{selected.name ?? `Inverter ${selected.pvs_path_id}`}</strong>
-            <span className="muted">
-              Path {selected.pvs_path_id}
-              {selected.model ? ` · ${selected.model}` : ""} · last seen{" "}
-              {new Date(selected.last_seen_at).toLocaleString()}
-            </span>
-            <div className="layout-controls">
-              <label>
-                Name
-                <input value={name} onChange={(e) => setName(e.target.value)} style={{ width: "12rem" }} />
-              </label>
-              <label>
-                Row
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={row}
-                  onChange={(e) => setRow(Number(e.target.value))}
-                />
-              </label>
-              <label>
-                Col
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={col}
-                  onChange={(e) => setCol(Number(e.target.value))}
-                />
-              </label>
-              <button type="button" className="icon-btn" disabled={saving} onClick={() => void saveLayout()}>
-                {saving ? "Saving…" : "Save layout"}
-              </button>
-            </div>
-            {message && <span className="muted">{message}</span>}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
+                  {kwh == null ? "—" : kwh}
+                  {kwh

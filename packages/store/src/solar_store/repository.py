@@ -247,48 +247,65 @@ class Repository:
             "frames": frames,
         }
 
-    async def inverter_range_summary(
-        self,
-        *,
-        start: datetime | None,
-        end: datetime,
+    async def inverter_energy_summary(
+    self,
+    *,
+    start: datetime | None,
+    end: datetime,
     ) -> dict[str, Any]:
-        """Average inverter power over a selected reporting window."""
+        """Per-inverter generated energy (kWh) over a window, from the
+        lifetime_energy_kwh cumulative counter (last - first sample in range).
+
+        When start is None ("all"), returns each inverter's true lifetime
+        total (latest cumulative reading) instead of a delta — mirroring
+        lifetime_pv_energy() at the site level.
+        """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
-                """
-                SELECT d.pvs_path_id, AVG(m.value) AS power_kw
+            """
+            WITH samples AS (
+                SELECT d.pvs_path_id, m.time, m.value
                 FROM devices d
-                LEFT JOIN measurements m
-                  ON m.device_id = d.id
-                 AND m.metric = 'power_kw'
-                 AND m.time < $2
-                 AND ($3::timestamptz IS NULL OR m.time >= $3)
-                WHERE d.site_id = $1::uuid AND d.device_type = 'inverter'
-                GROUP BY d.pvs_path_id
-                ORDER BY (d.pvs_path_id)::int
-                """,
-                HOME_SITE_ID,
-                end,
-                start,
+                JOIN measurements m ON m.device_id = d.id
+                WHERE d.site_id = $1::uuid
+                  AND d.device_type = 'inverter'
+                  AND m.metric = 'lifetime_energy_kwh'
+                  AND m.time < $3
+                  AND ($2::timestamptz IS NULL OR m.time >= $2)
+            ),
+            ranked AS (
+                SELECT pvs_path_id, time, value,
+                       ROW_NUMBER() OVER (PARTITION BY pvs_path_id ORDER BY time ASC) AS first_rank,
+                       ROW_NUMBER() OVER (PARTITION BY pvs_path_id ORDER BY time DESC) AS last_rank
+                FROM samples
             )
+            SELECT
+                pvs_path_id,
+                MAX(value) FILTER (WHERE first_rank = 1) AS first_value,
+                MAX(value) FILTER (WHERE last_rank = 1) AS last_value
+            FROM ranked
+            GROUP BY pvs_path_id
+            """,
+            HOME_SITE_ID,
+            start,
+            end,
+        )
 
-        values = {
-            str(row["pvs_path_id"]): (
-                round(float(row["power_kw"]), 6)
-                if row["power_kw"] is not None
-                else None
-            )
-            for row in rows
-        }
+        values: dict[str, float | None] = {}
+        for row in rows:
+            first_v, last_v = row["first_value"], row["last_value"]
+            if first_v is None or last_v is None:
+                values[str(row["pvs_path_id"])] = None
+            elif start is None:
+                values[str(row["pvs_path_id"])] = round(float(last_v), 3)
+            else:
+                values[str(row["pvs_path_id"])] = round(max(0.0, float(last_v) - float(first_v)), 3)
+
         return {
             "start": start.isoformat() if start else None,
             "end": end.isoformat(),
-            "values_kw": values,
-            "max_kw": max(
-                (value for value in values.values() if value is not None),
-                default=0.0,
-            ),
+            "values_kwh": values,
+            "max_kwh": max((v for v in values.values() if v is not None), default=0.0),
         }
 
     async def day_energy_summary(
