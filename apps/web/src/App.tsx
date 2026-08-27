@@ -9,6 +9,7 @@ import {
   type DaySummary,
   type Device,
   type HealthResponse,
+  type InverterSummaryResponse,
   type PlaybackResponse,
   type ProductionHistoryResponse,
   type ProductionRange,
@@ -49,7 +50,9 @@ export default function App() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [daySummary, setDaySummary] = useState<DaySummary | null>(null);
   const [productionRange, setProductionRange] = useState<ProductionRange>("week");
+  const [panelRange, setPanelRange] = useState<ProductionRange>("week");
   const [productionHistory, setProductionHistory] = useState<ProductionHistoryResponse | null>(null);
+  const [inverterSummary, setInverterSummary] = useState<InverterSummaryResponse | null>(null);
   const [playback, setPlayback] = useState<PlaybackResponse | null>(null);
   const [devices, setDevices] = useState<Device[]>([]);
   const [history, setHistory] = useState<Array<{ time: string; value: number }>>([]);
@@ -68,7 +71,7 @@ export default function App() {
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [h, c, d, hist, day, play, production] = await Promise.all([
+      const [h, c, d, hist, day, play, production, panels] = await Promise.all([
         api.health(),
         api.current(),
         api.devices(),
@@ -76,6 +79,7 @@ export default function App() {
         api.daySummary(),
         api.playback(24),
         api.productionHistory(productionRange),
+        api.inverterSummary(panelRange),
       ]);
       setHealth(h);
       setCurrent(c);
@@ -84,6 +88,7 @@ export default function App() {
       setHistory(hist.points.map((p) => ({ time: p.time, value: p.value })));
       setDaySummary(day);
       setProductionHistory(production);
+      setInverterSummary(panels);
       setPlayback(play);
       setError(null);
       setOffline(false);
@@ -97,7 +102,7 @@ export default function App() {
     } finally {
       setRefreshing(false);
     }
-  }, [hours, productionRange]);
+  }, [hours, panelRange, productionRange]);
 
   useEffect(() => {
     void refresh();
@@ -218,7 +223,14 @@ export default function App() {
       <DayChart points={history} hours={hours} />
 
       {current && (
-        <Heatmap current={current} devices={devices} onDevicesChange={setDevices} />
+        <Heatmap
+          current={current}
+          summary={inverterSummary}
+          range={panelRange}
+          onRangeChange={setPanelRange}
+          devices={devices}
+          onDevicesChange={setDevices}
+        />
       )}
 
       <DayScrubber playback={playback} devices={devices} />

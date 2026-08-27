@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { CurrentResponse, Device } from "../api";
+import type { CurrentResponse, Device, InverterSummaryResponse, ProductionRange } from "../api";
 import { api } from "../api";
 
 /** Violet (low) → green (high); returns background and whether text should be light. */
@@ -28,10 +28,16 @@ function defaultLayout(index: number, cols: number): { row: number; col: number 
 
 export function Heatmap({
   current,
+  summary,
+  range,
+  onRangeChange,
   devices,
   onDevicesChange,
 }: {
   current: CurrentResponse;
+  summary: InverterSummaryResponse | null;
+  range: ProductionRange;
+  onRangeChange: (range: ProductionRange) => void;
   devices: Device[];
   onDevicesChange: (devices: Device[]) => void;
 }) {
@@ -46,10 +52,7 @@ export function Heatmap({
     return m;
   }, [current.inverters]);
 
-  const maxKw = useMemo(() => {
-    const vals = current.inverters.map((i) => i.power_kw ?? 0);
-    return Math.max(...vals, 0.05);
-  }, [current.inverters]);
+  const maxKw = Math.max((summary?.max_w ?? 0) / 1000, 0.05);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = inverters.find((d) => d.id === selectedId) ?? null;
@@ -75,10 +78,14 @@ export function Heatmap({
         device: d,
         row: d.grid_row ?? fallback.row,
         col: d.grid_col ?? fallback.col,
-        power: powerByPath.get(d.pvs_path_id) ?? null,
+        power: summary?.values_w[d.pvs_path_id] != null
+          ? summary.values_w[d.pvs_path_id]! / 1000
+          : summary
+            ? null
+            : powerByPath.get(d.pvs_path_id) ?? null,
       };
     });
-  }, [inverters, powerByPath]);
+  }, [inverters, powerByPath, summary]);
 
   const rows = Math.max(4, ...placed.map((p) => p.row + 1));
 
@@ -103,7 +110,26 @@ export function Heatmap({
 
   return (
     <section className="section">
-      <h2>Panel heatmap</h2>
+      <div className="production-header">
+        <div>
+          <h2>Panel heatmap</h2>
+          <p className="muted production-subtitle">
+            {summary ? `Average generated power · ${summary.timezone}` : "Loading panel history…"}
+          </p>
+        </div>
+        <div className="production-tabs">
+          {(["day", "week", "month", "year", "all"] as ProductionRange[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={range === key ? "production-tab active" : "production-tab"}
+              onClick={() => onRangeChange(key)}
+            >
+              {key === "all" ? "All" : key[0].toUpperCase() + key.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="panel">
         <p className="muted" style={{ marginTop: 0 }}>
           Violet = low power, green = high. Values are watts (W). Tap a panel to rename or move it —

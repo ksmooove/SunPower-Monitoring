@@ -247,6 +247,50 @@ class Repository:
             "frames": frames,
         }
 
+    async def inverter_range_summary(
+        self,
+        *,
+        start: datetime | None,
+        end: datetime,
+    ) -> dict[str, Any]:
+        """Average inverter power over a selected reporting window."""
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT d.pvs_path_id, AVG(m.value) AS power_kw
+                FROM devices d
+                LEFT JOIN measurements m
+                  ON m.device_id = d.id
+                 AND m.metric = 'power_kw'
+                 AND m.time < $2
+                 AND ($3::timestamptz IS NULL OR m.time >= $3)
+                WHERE d.site_id = $1::uuid AND d.device_type = 'inverter'
+                GROUP BY d.pvs_path_id
+                ORDER BY (d.pvs_path_id)::int
+                """,
+                HOME_SITE_ID,
+                end,
+                start,
+            )
+
+        values = {
+            str(row["pvs_path_id"]): (
+                round(float(row["power_kw"]), 6)
+                if row["power_kw"] is not None
+                else None
+            )
+            for row in rows
+        }
+        return {
+            "start": start.isoformat() if start else None,
+            "end": end.isoformat(),
+            "values_kw": values,
+            "max_kw": max(
+                (value for value in values.values() if value is not None),
+                default=0.0,
+            ),
+        }
+
     async def day_energy_summary(
         self,
         *,
