@@ -157,4 +157,59 @@ export function Heatmap({
               >
                 <span className="w">
                   {kwh == null ? "—" : kwh}
-                  {kwh
+                  {kwh != null ? <span className="unit"> kWh</span> : null}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="legend">
+          <span>Low</span>
+          <div className="legend-bar legend-bar-violet-green" aria-hidden />
+          <span>High (kWh)</span>
+        </div>
+
+        {selected && (
+          <div className="detail">
+            <strong>{selected.name ?? `Inverter ${selected.pvs_path_id}`}</strong>
+            <span className="muted">
+              Path {selected.pvs_path_id}
+              {selected.model ? ` · ${selected.model}` : ""} · last seen{" "}
+              {new Date(selected.last_seen_at).toLocaleString()}
+            </span>
+            <div className="layout-controls">
+              <label>
+                Name
+                <input value={name} onChange={(e) => setName(e.target.value)} style={{ width: "12rem" }} />
+              </label>
+              <label>
+                Row
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={row}
+                  onChange={(e) => setRow(Number(e.target.value))}
+                />
+              </label>
+              <label>
+                Col
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={col}
+                  onChange={(e) => setCol(Number(e.target.value))}
+                />
+              </label>
+              <button type="button" className="icon-btn" disabled={saving} onClick={() => void saveLayout()}>
+                {saving ? "Saving…" : "Save layout"}
+              </button>
+            </div>
+            {message && <span className="muted">{message}</span>}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
