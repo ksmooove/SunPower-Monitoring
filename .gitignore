@@ -1,0 +1,90 @@
+# Secrets and local env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Credentials and keys
+*.pem
+*.key
+*.p12
+*credentials*
+*secrets*
+cookies.txt
+*.cookie
+
+# Captures and unredacted PVS data (never commit)
+captures/
+network-captures/
+*.pcap
+*.pcapng
+fixtures/pvs6/unredacted/
+fixtures/pvs6/raw/
+docs/discovery/private/
+docs/discovery/private/**
+*.raw.json
+*.redact-me.json
+
+# Android
+apps/android/local.properties
+apps/android/key.properties
+apps/android/.gradle/
+apps/android/**/build/
+apps/android/captures/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# Proprietary app packages
+*.ipa
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Node / frontend
+node_modules/
+.npm/
+.next/
+.turbo/
+dist/
+build/
+*.tsbuildinfo
+.expo/
+web-build/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Docker / data volumes (local)
+data/
+*.sql.gz
+backups/
+
+# Logs
+*.log
+logs/
+
+# Temporary
+tmp/
+temp/
+.cache/

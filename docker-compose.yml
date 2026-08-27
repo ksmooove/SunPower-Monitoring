@@ -1,0 +1,107 @@
+services:
+  db:
+    image: timescale/timescaledb:2.19.3-pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-solar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-locally}
+      POSTGRES_DB: ${POSTGRES_DB:-solar_monitor}
+    ports:
+      - "5432:5432"
+    volumes:
+      - solar_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-solar} -d ${POSTGRES_DB:-solar_monitor}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-solar}:${POSTGRES_PASSWORD:-change-me-locally}@db:5432/${POSTGRES_DB:-solar_monitor}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-solar}:${POSTGRES_PASSWORD:-change-me-locally}@db:5432/${POSTGRES_DB:-solar_monitor}
+      API_AUTH_TOKEN: ${API_AUTH_TOKEN:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      SITE_TIMEZONE: ${SITE_TIMEZONE:-America/Los_Angeles}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  collector:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.collector
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-solar}:${POSTGRES_PASSWORD:-change-me-locally}@db:5432/${POSTGRES_DB:-solar_monitor}
+      COLLECTOR_SOURCE: ${COLLECTOR_SOURCE:-fixture}
+      PVS_HOST: ${PVS_HOST:-192.168.1.96}
+      PVS_USERNAME: ${PVS_USERNAME:-ssm_owner}
+      PVS_PASSWORD: ${PVS_PASSWORD:-}
+      PVS_VERIFY_TLS: ${PVS_VERIFY_TLS:-false}
+      PVS_POLL_INTERVAL_SECONDS: ${PVS_POLL_INTERVAL_SECONDS:-300}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    command:
+      - solar-collector
+      - poll
+      - --source
+      - ${COLLECTOR_SOURCE:-fixture}
+      - --fixtures-dir
+      - /app/fixtures/pvs6
+      - --interval-seconds
+      - ${PVS_POLL_INTERVAL_SECONDS:-300}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.web
+    ports:
+      - "${WEB_PORT:-3080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  cloud-sync:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.cloud-sync
+    profiles: ["cloud-sync"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-solar}:${POSTGRES_PASSWORD:-change-me-locally}@db:5432/${POSTGRES_DB:-solar_monitor}
+      CLOUD_SYNC_URL: ${CLOUD_SYNC_URL:-https://solar.blackmagicsoftware.net}
+      CLOUD_SYNC_TOKEN: ${CLOUD_SYNC_TOKEN:-}
+      CLOUD_SYNC_INTERVAL_SECONDS: ${CLOUD_SYNC_INTERVAL_SECONDS:-300}
+      CLOUD_SYNC_HISTORY_HOURS: ${CLOUD_SYNC_HISTORY_HOURS:-48}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  solar_pgdata:

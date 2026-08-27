@@ -1,0 +1,116 @@
+# Tag-triggered release: build/push Docker images to GHCR.
+# The signed Android APK is built locally (keystore) and uploaded with scripts/publish-release.ps1.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  docker:
+    name: Build and push images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Version from tag
+        id: ver
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          OWNER_LC="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          {
+            echo "tag=${TAG}"
+            echo "version=${VERSION}"
+            echo "owner=${OWNER_LC}"
+            echo "prefix=ghcr.io/${OWNER_LC}/solar-monitor"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push images
+        env:
+          PREFIX: ${{ steps.ver.outputs.prefix }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          set -euo pipefail
+          build_push() {
+            local name="$1"
+            local dockerfile="$2"
+            docker buildx build \
+              --file "$dockerfile" \
+              --tag "${PREFIX}-${name}:${VERSION}" \
+              --tag "${PREFIX}-${name}:${TAG}" \
+              --tag "${PREFIX}-${name}:latest" \
+              --push \
+              .
+          }
+          build_push api infrastructure/docker/Dockerfile.api
+          build_push web infrastructure/docker/Dockerfile.web
+          build_push collector infrastructure/docker/Dockerfile.collector
+          build_push migrate infrastructure/docker/Dockerfile.migrate
+          build_push cloud-sync infrastructure/docker/Dockerfile.cloud-sync
+          build_push cloud-api infrastructure/docker/Dockerfile.cloud-api
+
+      - name: Ensure GitHub Release exists / refresh notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          PREFIX: ${{ steps.ver.outputs.prefix }}
+        run: |
+          set -euo pipefail
+          NOTES_FILE="${RUNNER_TEMP}/release-notes.md"
+          {
+            echo "## Solar Monitor ${TAG}"
+            echo
+            echo "Home stack + DigitalOcean read replica + Android (APK from a local signed build)."
+            echo
+            echo "### Docker images (GHCR)"
+            echo
+            echo '```'
+            echo "${PREFIX}-api:${VERSION}"
+            echo "${PREFIX}-web:${VERSION}"
+            echo "${PREFIX}-collector:${VERSION}"
+            echo "${PREFIX}-migrate:${VERSION}"
+            echo "${PREFIX}-cloud-sync:${VERSION}"
+            echo "${PREFIX}-cloud-api:${VERSION}"
+            echo '```'
+            echo
+            echo "Also tagged \`${TAG}\` and \`latest\`."
+            echo
+            echo '```bash'
+            echo "docker pull ${PREFIX}-api:${VERSION}"
+            echo '```'
+            echo
+            echo "### Android"
+            echo
+            echo "Install the signed \`solar-monitor-${VERSION}.apk\` asset on this release (built locally with your upload keystore — not in CI)."
+            echo
+            echo "See [docs/releasing.md](docs/releasing.md)."
+          } > "$NOTES_FILE"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file "$NOTES_FILE"
+          else
+            gh release create "$TAG" --title "Solar Monitor ${TAG}" --notes-file "$NOTES_FILE" --verify-tag
+          fi

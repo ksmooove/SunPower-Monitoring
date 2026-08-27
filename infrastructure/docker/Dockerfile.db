@@ -1,0 +1,3 @@
+FROM timescale/timescaledb:2.19.3-pg16
+
+# keep default entrypoint; migrations run via migrate service

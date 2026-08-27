@@ -1,0 +1,64 @@
+services:
+  db:
+    # Must match the version that initialized /opt/solar-cloud/data (or wipe data and repin).
+    # Initial droplet stub used latest-pg16 (~2.28.x); do not mix with older tags on the same volume.
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-solar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-solar_monitor_cloud}
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-solar} -d $${POSTGRES_DB:-solar_monitor_cloud} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    networks: [internal]
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.cloud-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      API_AUTH_TOKEN: ${API_AUTH_TOKEN:-}
+      CLOUD_SYNC_TOKEN: ${CLOUD_SYNC_TOKEN}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_HOST: ${API_HOST}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal, edge]
+
+networks:
+  internal:
+    internal: true
+  edge:

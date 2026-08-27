@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solar-cloud-api"
+version = "0.1.0"
+description = "Public read API + ingest for solar-monitor cloud replica"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi==0.116.1",
+  "uvicorn[standard]==0.35.0",
+  "asyncpg==0.30.0",
+  "pydantic==2.11.7",
+  "pydantic-settings==2.10.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solar-cloud-sync"
+version = "0.1.0"
+description = "Push read-only solar snapshots from home Timescale to cloud ingest API"
+requires-python = ">=3.12"
+dependencies = [
+  "asyncpg==0.30.0",
+  "httpx==0.28.1",
+  "pydantic-settings==2.10.1",
+]
+
+[project.scripts]
+solar-cloud-sync = "solar_cloud_sync.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

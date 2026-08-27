@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY packages/store /app/packages/store
+COPY services/collector /app/services/collector
+COPY fixtures/pvs6 /app/fixtures/pvs6
+
+RUN pip install --no-cache-dir -e /app/packages/store -e /app/services/collector
+
+WORKDIR /app/services/collector
+ENV PYTHONUNBUFFERED=1
+ENV FIXTURES_DIR=/app/fixtures/pvs6
+
+CMD ["solar-collector", "poll", "--source", "fixture", "--fixtures-dir", "/app/fixtures/pvs6"]

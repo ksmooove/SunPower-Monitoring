@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY packages/store /app/packages/store
+COPY services/cloud-sync /app/services/cloud-sync
+
+RUN pip install --no-cache-dir -e /app/packages/store -e /app/services/cloud-sync
+
+ENV PYTHONUNBUFFERED=1
+CMD ["solar-cloud-sync", "poll"]

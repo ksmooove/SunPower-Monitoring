@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solar-store"
+version = "0.1.0"
+description = "Shared database access for solar-monitor"
+requires-python = ">=3.12"
+dependencies = [
+  "asyncpg==0.30.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

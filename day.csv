@@ -1,0 +1,3 @@
+time,device_type,pvs_path_id,metric,value,unit,quality,source
+2026-07-13T16:02:23+00:00,site,livedata,pv_power_kw,4.775067,kW,measured,varserver.livedata
+2026-07-13T16:06:55+00:00,site,livedata,pv_power_kw,4.775067,kW,measured,varserver.livedata

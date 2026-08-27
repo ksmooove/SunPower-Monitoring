@@ -1,0 +1,16 @@
+{
+  "result": "succeed",
+  "supervisor": {
+    "SWVER": "2025.10, Build 61846",
+    "SERIAL": "SERIAL_REDACTED",
+    "MODEL": "PVS6",
+    "BUILD": 61846,
+    "FWVER": "1.0.0",
+    "SCVER": 1630652920,
+    "EASICVER": 131329,
+    "SCBUILD": 1188,
+    "WNSERIAL": 16,
+    "WNMODEL": 400,
+    "WNVER": 3000
+  }
+}

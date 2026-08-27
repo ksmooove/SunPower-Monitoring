@@ -1,0 +1,14 @@
+{
+  "/sys/livedata/time": "1783955665",
+  "/sys/livedata/pv_p": "4.775067",
+  "/sys/livedata/pv_en": "63686.289062",
+  "/sys/livedata/net_p": "-1.224700",
+  "/sys/livedata/net_en": "-713.510010",
+  "/sys/livedata/site_load_p": "3.550366",
+  "/sys/livedata/site_load_en": "62972.781250",
+  "/sys/livedata/ess_en": "nan",
+  "/sys/livedata/ess_p": "nan",
+  "/sys/livedata/soc": "nan",
+  "/sys/livedata/backupTimeRemaining": "0",
+  "/sys/livedata/midstate": "0"
+}

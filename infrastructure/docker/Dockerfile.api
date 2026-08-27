@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY packages/store /app/packages/store
+COPY apps/api /app/apps/api
+
+RUN pip install --no-cache-dir -e /app/packages/store -e /app/apps/api
+
+WORKDIR /app/apps/api
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 8000
+CMD ["uvicorn", "solar_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

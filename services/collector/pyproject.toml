@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solar-collector"
+version = "0.1.0"
+description = "Read-only local PVS6 data collector for solar-monitor"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "httpx==0.28.1",
+  "pydantic==2.11.7",
+  "pydantic-settings==2.10.1",
+  "asyncpg==0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.4.1",
+  "pytest-asyncio==1.0.0",
+  "respx==0.22.0",
+]
+
+[project.scripts]
+solar-collector = "solar_collector.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
