@@ -80,9 +80,11 @@ migration `003_historical_reports.sql` runs:
 git pull origin fix-heatmap
 docker compose up -d --build
 
-py -m pip install -r scripts\requirements.txt
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt
 $env:DATABASE_URL = "postgresql://solar:YOUR_PASSWORD@127.0.0.1:5432/solar_monitor"
-py scripts\import_sunpower_reports.py C:\path\to\reports --database-url $env:DATABASE_URL
+.\.venv\Scripts\python.exe scripts\import_sunpower_reports.py C:\path\to\reports --database-url $env:DATABASE_URL
 ```
 
 The command is safe to rerun. It expects text-extractable PDFs whose daily rows contain date,

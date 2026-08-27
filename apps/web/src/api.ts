@@ -142,6 +142,7 @@ export type ProductionHistoryPoint = {
 
 export type ProductionHistoryResponse = {
   range: ProductionRange;
+  period?: string | null;
   timezone: string;
   bucket: "day" | "month" | "year";
   total_kwh: number;
@@ -184,9 +185,9 @@ export const api = {
   current: () => apiFetch<CurrentResponse>("/v1/current"),
   devices: () => apiFetch<{ devices: Device[] }>("/v1/devices"),
   daySummary: () => apiFetch<DaySummary>("/v1/day-summary"),
-  productionHistory: (range: ProductionRange) =>
+  productionHistory: (range: ProductionRange, period?: string) =>
     apiFetch<ProductionHistoryResponse>(
-      `/v1/production-history?range=${range}`,
+      `/v1/production-history?range=${range}${period ? `&period=${encodeURIComponent(period)}` : ""}`,
     ),
   inverterSummary: (range: ProductionRange) =>
     apiFetch<InverterSummaryResponse>(

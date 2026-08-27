@@ -58,10 +58,14 @@ export function ProductionHistory({
   data,
   range,
   onRangeChange,
+  period,
+  onPeriodChange,
 }: {
   data: ProductionHistoryResponse | null;
   range: ProductionRange;
   onRangeChange: (range: ProductionRange) => void;
+  period: string | undefined;
+  onPeriodChange: (period: string | undefined) => void;
 }) {
   const maxKwh = useMemo(() => {
     if (!data?.points.length) return 1;
@@ -84,6 +88,10 @@ export function ProductionHistory({
           : range === "year"
             ? "Monthly production — this year"
             : "Lifetime production";
+
+  const periodType =
+    range === "day" ? "date" : range === "week" ? "week" : range === "month" ? "month" : "number";
+  const periodPlaceholder = range === "year" ? "Year" : undefined;
 
   return (
     <section className="section">
@@ -114,6 +122,26 @@ export function ProductionHistory({
           )}
         </div>
       </div>
+
+      {range !== "all" && (
+        <div className="production-period-control">
+          <label htmlFor="production-period">Choose {range}</label>
+          <input
+            id="production-period"
+            type={periodType}
+            min={range === "year" ? "2000" : undefined}
+            max={range === "year" ? "2100" : undefined}
+            placeholder={periodPlaceholder}
+            value={period ?? ""}
+            onChange={(event) => onPeriodChange(event.target.value || undefined)}
+          />
+          {period && (
+            <button type="button" className="production-period-clear" onClick={() => onPeriodChange(undefined)}>
+              Current
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="panel production-history-panel">
         <div className="production-total">
