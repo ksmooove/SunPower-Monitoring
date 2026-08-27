@@ -282,6 +282,46 @@ async def production_history(
         "points": points,
     }
 
+@app.get("/v1/inverter-summary", dependencies=[Depends(require_auth)])
+async def inverter_summary(
+    repo: Annotated[Repository, Depends(get_repo)],
+    range: str = Query("week", pattern="^(day|week|month|year|all)$"),
+) -> dict[str, Any]:
+    """Average generated power for each inverter over a calendar range."""
+    zone = ZoneInfo(settings.site_timezone)
+    today = datetime.now(zone).date()
+
+    if range == "day":
+        start_date: date | None = today
+    elif range == "week":
+        start_date = today - timedelta(days=6)
+    elif range == "month":
+        start_date = today.replace(day=1)
+    elif range == "year":
+        start_date = today.replace(month=1, day=1)
+    else:
+        start_date = None
+
+    start = (
+        datetime.combine(start_date, datetime.min.time(), tzinfo=zone).astimezone(timezone.utc)
+        if start_date is not None
+        else None
+    )
+    end = datetime.now(timezone.utc)
+    data = await repo.inverter_range_summary(start=start, end=end)
+    return {
+        "range": range,
+        "timezone": settings.site_timezone,
+        "unit": "W",
+        "start": data["start"],
+        "end": data["end"],
+        "values_w": {
+            path: round(value * 1000, 1) if value is not None else None
+            for path, value in data["values_kw"].items()
+        },
+        "max_w": round(data["max_kw"] * 1000, 1),
+    }
+
 @app.get("/v1/playback", dependencies=[Depends(require_auth)])
 async def playback(
     repo: Annotated[Repository, Depends(get_repo)],

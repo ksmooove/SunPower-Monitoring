@@ -154,6 +154,16 @@ export type ProductionHistoryResponse = {
   points: ProductionHistoryPoint[];
 };
 
+export type InverterSummaryResponse = {
+  range: ProductionRange;
+  timezone: string;
+  unit: "W";
+  start: string | null;
+  end: string;
+  values_w: Record<string, number | null>;
+  max_w: number;
+};
+
 export type PlaybackResponse = {
   start: string;
   end: string;
@@ -176,6 +186,10 @@ export const api = {
   productionHistory: (range: ProductionRange) =>
     apiFetch<ProductionHistoryResponse>(
       `/v1/production-history?range=${range}`,
+    ),
+  inverterSummary: (range: ProductionRange) =>
+    apiFetch<InverterSummaryResponse>(
+      `/v1/inverter-summary?range=${range}`,
     ),
   playback: (hours = 24) => apiFetch<PlaybackResponse>(`/v1/playback?hours=${hours}`),
   history: (metric: string, hours = 24) =>
