@@ -287,7 +287,11 @@ async def inverter_summary(
     repo: Annotated[Repository, Depends(get_repo)],
     range: str = Query("week", pattern="^(day|week|month|year|all)$"),
 ) -> dict[str, Any]:
-    """Average generated power for each inverter over a calendar range."""
+    """Per-inverter generated energy (kWh) over a calendar range.
+
+    For 'all', values are true lifetime totals reported by the PVS
+    (latest cumulative counter reading), not a delta.
+    """
     zone = ZoneInfo(settings.site_timezone)
     today = datetime.now(zone).date()
 
@@ -308,18 +312,16 @@ async def inverter_summary(
         else None
     )
     end = datetime.now(timezone.utc)
-    data = await repo.inverter_range_summary(start=start, end=end)
+    data = await repo.inverter_energy_summary(start=start, end=end)
     return {
         "range": range,
         "timezone": settings.site_timezone,
-        "unit": "W",
+        "unit": "kWh",
+        "is_lifetime": start is None,
         "start": data["start"],
         "end": data["end"],
-        "values_w": {
-            path: round(value * 1000, 1) if value is not None else None
-            for path, value in data["values_kw"].items()
-        },
-        "max_w": round(data["max_kw"] * 1000, 1),
+        "values_kwh": data["values_kwh"],
+        "max_kwh": data["max_kwh"],
     }
 
 @app.get("/v1/playback", dependencies=[Depends(require_auth)])
