@@ -66,6 +66,30 @@ Then open:
 - **App:** http://127.0.0.1:3080
 - **API health:** http://127.0.0.1:8000/health
 
+### Import SunPower PDF reports on the runtime workstation
+
+Historical monthly reports can be imported without changing live collector data. The importer stores
+the report totals and daily energy with `historical_report` provenance, and production history uses
+those daily values only where live cumulative samples are missing.
+
+The PDF files and database stay on the workstation that runs Docker. They do not need to be copied
+to the build machine or committed. On that workstation, pull the code and start the stack so
+migration `003_historical_reports.sql` runs:
+
+```powershell
+git pull origin fix-heatmap
+docker compose up -d --build
+
+py -m pip install -r scripts\requirements.txt
+$env:DATABASE_URL = "postgresql://solar:YOUR_PASSWORD@127.0.0.1:5432/solar_monitor"
+py scripts\import_sunpower_reports.py C:\path\to\reports --database-url $env:DATABASE_URL
+```
+
+The command is safe to rerun. It expects text-extractable PDFs whose daily rows contain date,
+energy kWh, and maximum AC power kW, like the SunPower monthly report format. The importer stores
+site-level daily production; these reports do not contain enough information to reconstruct
+individual panel production.
+
 ```powershell
 curl.exe -s http://127.0.0.1:8000/health
 curl.exe -s http://127.0.0.1:8000/v1/current

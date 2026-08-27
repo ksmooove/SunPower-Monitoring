@@ -487,8 +487,25 @@ class Repository:
                 start_date,
                 end_date,
             )
+            historical_rows = await conn.fetch(
+                """
+                SELECT DISTINCT ON (d.local_date)
+                    d.local_date, d.energy_kwh, d.max_power_kw
+                FROM historical_report_days d
+                JOIN historical_reports r ON r.id = d.report_id
+                WHERE ($1::date IS NULL OR d.local_date >= $1::date)
+                  AND d.local_date <= $2::date
+                ORDER BY d.local_date, r.period_end DESC
+                """,
+                start_date,
+                end_date,
+            )
 
         result: list[dict[str, Any]] = []
+
+        historical_by_date = {
+            row["local_date"]: row for row in historical_rows
+        }
 
         for row in rows:
             first_value = row["first_value"]
@@ -512,16 +529,32 @@ class Repository:
                     float(last_value) - float(first_value),
                 )
 
-            result.append(
-                {
-                    "date": row["local_date"].isoformat(),
-                    "generated_kwh": generated_kwh,
-                    "insufficient_samples": not sufficient_samples,
-                    "sample_count": int(row["sample_count"]),
-                    "first_at": first_at.isoformat() if first_at else None,
-                    "last_at": last_at.isoformat() if last_at else None,
-                }
-            )
+            local_date = row["local_date"]
+            historical = historical_by_date.pop(local_date, None)
+            if generated_kwh is None and historical is not None:
+                generated_kwh = float(historical["energy_kwh"])
+                sufficient_samples = True
+
+            result.append({
+                "date": local_date.isoformat(),
+                "generated_kwh": generated_kwh,
+                "insufficient_samples": not sufficient_samples,
+                "sample_count": int(row["sample_count"]),
+                "first_at": first_at.isoformat() if first_at else None,
+                "last_at": last_at.isoformat() if last_at else None,
+            })
+
+        for local_date, historical in sorted(historical_by_date.items()):
+            result.append({
+                "date": local_date.isoformat(),
+                "generated_kwh": float(historical["energy_kwh"]),
+                "insufficient_samples": False,
+                "sample_count": 1,
+                "first_at": None,
+                "last_at": None,
+            })
+
+        result.sort(key=lambda point: point["date"])
 
         return result
 
