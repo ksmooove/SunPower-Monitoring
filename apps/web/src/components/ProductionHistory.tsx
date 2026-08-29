@@ -97,7 +97,8 @@ export function ProductionHistory({
   const periodPlaceholder = range === "year" ? "Year" : undefined;
 
   return (
-    <section className="section">
+    <>
+      <section className="section">
       <div className="production-header">
         <div>
           <h2>Production</h2>
@@ -240,19 +241,22 @@ export function ProductionHistory({
           </>
         )}
       </div>
-      <div className="chart-controls">
-        <h3>Production Chart</h3>
-        <div className="production-period-control chart-period-control">
-          <label htmlFor="production-chart-date">Chart date</label>
-          <input
-            id="production-chart-date"
-            type="date"
-            value={chartDate}
-            onChange={(event) => onChartDateChange(event.target.value)}
-          />
+      </section>
+      <section className="section">
+        <div className="chart-controls">
+          <h2>Production Chart</h2>
+          <div className="production-period-control chart-period-control">
+            <label htmlFor="production-chart-date">Chart date</label>
+            <input
+              id="production-chart-date"
+              type="date"
+              value={chartDate}
+              onChange={(event) => onChartDateChange(event.target.value)}
+            />
+          </div>
         </div>
-      </div>
-      <DayChart points={chartPoints} />
-    </section>
+        <DayChart points={chartPoints} />
+      </section>
+    </>
   );
 }
