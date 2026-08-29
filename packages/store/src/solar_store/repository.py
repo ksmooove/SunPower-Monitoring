@@ -27,25 +27,23 @@ def compute_inverter_energy_delta(
     if start is None:
         return round(float(ordered[-1][1]), 3)
 
-    start_value: float | None = None
-    end_value: float | None = None
+    previous: float | None = None
+    generated = 0.0
 
-    for ts, value in ordered:
+    for ts, raw_value in ordered:
+        value = float(raw_value)
         if ts < start:
-            start_value = float(value)
-        if ts <= end:
-            end_value = float(value)
+            previous = value
+            continue
+        if ts > end:
+            break
+        if previous is not None and value >= previous:
+            generated += value - previous
+        # A lower reading indicates that the lifetime counter reset. Start a
+        # new segment without charging the discontinuity as production.
+        previous = value
 
-    if start_value is None:
-        first_in_window = next((float(value) for ts, value in ordered if ts >= start), None)
-        if first_in_window is None:
-            return 0.0
-        start_value = first_in_window
-
-    if end_value is None:
-        end_value = float(ordered[-1][1])
-
-    return round(max(0.0, end_value - start_value), 3)
+    return round(generated, 3)
 
 
 class Repository:
