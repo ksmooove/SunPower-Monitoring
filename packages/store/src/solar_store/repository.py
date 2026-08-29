@@ -399,6 +399,22 @@ class Repository:
                 start,
                 end,
             )
+            peak_power_kw = await conn.fetchval(
+                """
+                SELECT MAX(m.value)
+                FROM measurements m
+                JOIN devices d ON d.id = m.device_id
+                WHERE d.site_id = $1::uuid
+                  AND d.device_type = 'site'
+                  AND d.pvs_path_id = 'livedata'
+                  AND m.metric = 'pv_power_kw'
+                  AND m.time >= $2
+                  AND m.time <= $3
+                """,
+                HOME_SITE_ID,
+                start,
+                end,
+            )
 
         first_map = {r["metric"]: r for r in first_rows}
         last_map = {r["metric"]: r for r in last_rows}
@@ -447,8 +463,9 @@ class Repository:
             "local_date": now_local.date().isoformat(),
             "window_start": start.isoformat(),
             "window_end": end.isoformat(),
-            "generated_kwh": None if not pv else max(0.0, float(pv["kwh"])),
+            "generated_kwh": None if pv is None else max(0.0, float(pv["kwh"])),
             "generated_insufficient_samples": bool(pv and pv.get("insufficient_samples")),
+            "peak_power_kw": float(peak_power_kw) if peak_power_kw is not None else None,
             "grid_kwh": grid_kwh,
             "grid_direction": grid_direction,
             "grid_insufficient_samples": bool(net and net.get("insufficient_samples")),

@@ -12,97 +12,34 @@ function formatKwh(n: number | null | undefined): string {
   return `${n.toFixed(2)} kWh`;
 }
 
-export function Overview({
+export function TodaysProduction({
+  summary,
   pv,
-  load,
-  net,
 }: {
+  summary: DaySummary | null;
   pv: number | null;
-  load: number | null;
-  net: number | null;
 }) {
-  const gridMode = net == null ? "unknown" : net < 0 ? "export" : "import";
-  const gridAbs = net == null ? null : Math.abs(net);
-
   return (
     <section className="section">
-      <h2>Live power</h2>
-      <div className="flow">
-        <article className="stat solar">
-          <div className="label">Solar</div>
-          <div className="value">{pv == null ? "—" : formatKw(pv)}</div>
-          <div className="meta">Measured production</div>
-        </article>
-        {load != null && (
-          <article className="stat load">
-            <div className="label">Home</div>
-            <div className="value">{formatKw(load)}</div>
-            <div className="meta">Site load</div>
-          </article>
-        )}
-        {net != null && (
-          <article className={`stat grid ${gridMode}`}>
-            <div className="label">Grid</div>
-            <div className="value">{gridAbs != null ? formatKw(gridAbs) : "—"}</div>
-            <div className="meta">
-              {gridMode === "export" ? "Exporting" : gridMode === "import" ? "Importing" : "Net flow"}
-            </div>
-          </article>
-        )}
-      </div>
-    </section>
-  );
-}
-
-export function TodayEnergy({ summary }: { summary: DaySummary | null }) {
-  return (
-    <section className="section">
-      <h2>Today ({summary?.local_date ?? "…"})</h2>
+      <h2>Today's Production</h2>
       <div className="flow">
         <article className="stat solar">
           <div className="label">Generated</div>
           <div className="value">
-            {summary?.generated_insufficient_samples
-              ? "…"
-              : formatKwh(summary?.generated_kwh)}
+            {summary?.generated_insufficient_samples ? "…" : formatKwh(summary?.generated_kwh)}
           </div>
+          <div className="meta">Today</div>
         </article>
-        {false && (
-          <article
-            className={`stat grid ${
-              summary?.grid_direction === "export"
-                ? "export"
-                : summary?.grid_direction === "import"
-                  ? "import"
-                  : ""
-            }`}
-          >
-            <div className="label">{gridLabel}</div>
-            <div className="value">
-              {summary?.grid_insufficient_samples
-                ? "…"
-                : formatKwh(summary?.grid_kwh)}
-            </div>
-            <div className="meta">
-              {summary?.grid_direction === "export"
-                ? "Net to utility today"
-                : summary?.grid_direction === "import"
-                  ? "Net from utility today"
-                  : "Needs more samples today"}
-            </div>
-          </article>
-        )}
-        {false && (
-          <article className="stat load">
-            <div className="label">Home use</div>
-            <div className="value">
-              {summary?.home_load_insufficient_samples
-                ? "…"
-                : formatKwh(summary?.home_load_kwh)}
-            </div>
-            <div className="meta">Site load energy today</div>
-          </article>
-        )}
+        <article className="stat solar">
+          <div className="label">Current Solar</div>
+          <div className="value">{pv == null ? "—" : formatKw(pv)}</div>
+          <div className="meta">Live output</div>
+        </article>
+        <article className="stat solar">
+          <div className="label">Peak Power</div>
+          <div className="value">{summary?.peak_power_kw == null ? "—" : formatKw(summary.peak_power_kw)}</div>
+          <div className="meta">Highest today</div>
+        </article>
       </div>
     </section>
   );

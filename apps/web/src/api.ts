@@ -114,6 +114,7 @@ export type DaySummary = {
   window_start: string;
   window_end: string;
   generated_kwh: number | null;
+  peak_power_kw: number | null;
   generated_insufficient_samples: boolean;
   grid_kwh: number | null;
   grid_direction: "export" | "import" | "neutral" | null;

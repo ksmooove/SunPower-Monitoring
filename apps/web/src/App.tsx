@@ -14,7 +14,7 @@ import {
   type ProductionHistoryResponse,
   type ProductionRange,
 } from "./api";
-import { DayChart, Overview, TodayEnergy } from "./components/Overview";
+import { DayChart, TodaysProduction } from "./components/Overview";
 import { PowerFlow } from "./components/PowerFlow";
 import { Heatmap } from "./components/Heatmap";
 import { ProductionHistory } from "./components/ProductionHistory";
@@ -193,13 +193,10 @@ export default function App() {
         </div>
       </section>
 
-      <Overview
+      <TodaysProduction
+        summary={daySummary}
         pv={metricValue(current, "pv_power_kw")}
-        load={metricValue(current, "site_load_power_kw")}
-        net={metricValue(current, "net_power_kw")}
       />
-
-      <TodayEnergy summary={daySummary} />
 
       <ProductionHistory
       data={productionHistory}
