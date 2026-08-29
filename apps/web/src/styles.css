@@ -192,6 +192,7 @@ input {
   position: relative;
   width: 100%;
   overflow: hidden;
+  margin-top: 0.9rem;
 }
 
 .chart-wrap svg {

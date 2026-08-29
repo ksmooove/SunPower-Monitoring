@@ -54,85 +54,69 @@ export function DayChart({
   points: Point[];
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const { path, area, maxY, labels, coords } = useMemo(() => {
+  const { maxY, bars } = useMemo(() => {
     if (points.length === 0) {
-      return { path: "", area: "", maxY: 1, labels: [] as string[], coords: [] as Array<readonly [number, number]> };
+      return { maxY: 1, bars: [] as Array<{ x: number; y: number; width: number; height: number }> };
     }
     const values = points.map((p) => p.value);
     const maxY = Math.max(...values, 0.1);
-    const w = 640;
-    const h = 220;
-    const pad = 16;
-    const coords = points.map((p, i) => {
-      const x = pad + (i / Math.max(points.length - 1, 1)) * (w - pad * 2);
-      const y = h - pad - (p.value / maxY) * (h - pad * 2);
-      return [x, y] as const;
+    const first = new Date(points[0].time);
+    const dayStart = new Date(first.getFullYear(), first.getMonth(), first.getDate()).getTime();
+    const w = 720;
+    const plotLeft = 44;
+    const plotRight = 704;
+    const plotTop = 24;
+    const plotBottom = 232;
+    const plotWidth = plotRight - plotLeft;
+    const bars = points.map((point) => {
+      const fraction = Math.max(0, Math.min(1, (new Date(point.time).getTime() - dayStart) / 86_400_000));
+      const x = plotLeft + fraction * plotWidth;
+      const height = (point.value / maxY) * (plotBottom - plotTop);
+      return { x: x - 2, y: plotBottom - height, width: 4, height };
     });
-    const path = coords
-      .map((c, i) => `${i === 0 ? "M" : "L"}${c[0].toFixed(1)},${c[1].toFixed(1)}`)
-      .join(" ");
-    const area = `${path} L${coords.at(-1)![0].toFixed(1)},${h - pad} L${coords[0][0].toFixed(1)},${h - pad} Z`;
-    const fmt = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    const labels = [
-      fmt(points[0].time),
-      fmt(points[Math.floor(points.length / 2)].time),
-      fmt(points.at(-1)!.time),
-    ];
-    return { path, area, maxY, labels, coords };
+    return { maxY, bars };
   }, [points]);
 
   return (
     <div className="panel chart-wrap">
-        {points.length < 2 ? (
+        {points.length === 0 ? (
           <p className="muted">
-            Not enough history yet. The collector stores one sample every poll (~5 min). Longer
-            ranges will look the same until more time has accumulated.
+            No solar production samples have been collected today.
           </p>
         ) : (
           <svg
-            viewBox="0 0 640 240"
+            viewBox="0 0 720 280"
             role="img"
             aria-label="Solar production over today's calendar day"
             onMouseLeave={() => setHovered(null)}
           >
-            <defs>
-              <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.45" />
-                <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.02" />
-              </linearGradient>
-            </defs>
-            <path d={area} fill="url(#fillGrad)" />
-            <path
-              d={path}
-              fill="none"
-              stroke="var(--accent)"
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-            />
-            {coords.map(([x, y], index) => (
-              <circle
+            {[0, 6, 12, 18, 24].map((hour) => {
+              const x = 44 + (hour / 24) * 660;
+              return (
+                <g key={hour}>
+                  <line x1={x} y1="24" x2={x} y2="232" stroke="var(--line)" strokeDasharray="3 5" />
+                  <text x={x} y="258" fill="var(--muted)" fontSize="12" textAnchor={hour === 0 ? "start" : hour === 24 ? "end" : "middle"}>
+                    {hour === 0 || hour === 24 ? "12 AM" : hour === 12 ? "12 PM" : `${hour > 12 ? hour - 12 : hour} ${hour > 12 ? "PM" : "AM"}`}
+                  </text>
+                </g>
+              );
+            })}
+            <text x="44" y="16" fill="var(--muted)" fontSize="12">
+              max {maxY.toFixed(2)} kW
+            </text>
+            {bars.map((bar, index) => (
+              <rect
                 key={points[index].time}
-                cx={x}
-                cy={y}
-                r={hovered === index ? 6 : 4}
+                x={bar.x}
+                y={bar.y}
+                width={bar.width}
+                height={bar.height}
+                rx="1"
                 fill="var(--accent)"
-                stroke="var(--panel)"
-                strokeWidth="2"
+                opacity={hovered === index ? 1 : 0.82}
                 onMouseEnter={() => setHovered(index)}
               />
             ))}
-            <text x="16" y="18" fill="var(--muted)" fontSize="12">
-              max {maxY.toFixed(2)} kW
-            </text>
-            <text x="16" y="232" fill="var(--muted)" fontSize="12">
-              {labels[0]}
-            </text>
-            <text x="300" y="232" fill="var(--muted)" fontSize="12" textAnchor="middle">
-              {labels[1]}
-            </text>
-            <text x="624" y="232" fill="var(--muted)" fontSize="12" textAnchor="end">
-              {labels[2]}
-            </text>
           </svg>
         )}
         {hovered != null && points[hovered] && (
