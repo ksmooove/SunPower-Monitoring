@@ -368,7 +368,7 @@ input {
 }
 
 .production-period-control input::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+  filter: none;
 }
 
 html[data-theme="dark"] .production-period-control input {
