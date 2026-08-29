@@ -324,6 +324,15 @@ class Repository:
                 values[pvs_path_id] = round(float(samples[-1][1]), 3)
             else:
                 values[pvs_path_id] = compute_inverter_energy_delta(samples, start, end)
+
+        return {
+            "start": start.isoformat() if start else None,
+            "end": end.isoformat(),
+            "values_kwh": values,
+            "max_kwh": max((v for v in values.values() if v is not None), default=0.0),
+        }
+
+    async def day_energy_summary(
         self,
         *,
         timezone_name: str = "America/Los_Angeles",
