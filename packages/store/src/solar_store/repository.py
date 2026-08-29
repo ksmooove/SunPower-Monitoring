@@ -86,12 +86,23 @@ class Repository:
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT DISTINCT ON (m.metric)
-                    m.metric, m.value, m.unit, m.time, m.collected_at, m.quality, m.source
-                FROM measurements m
-                JOIN devices d ON d.id = m.device_id
-                WHERE d.site_id = $1::uuid AND d.device_type = 'site' AND d.pvs_path_id = 'livedata'
-                ORDER BY m.metric, m.time DESC
+                                WITH latest_collection AS (
+                                        SELECT max(m.collected_at) AS collected_at
+                                        FROM measurements m
+                                        JOIN devices d ON d.id = m.device_id
+                                        WHERE d.site_id = $1::uuid
+                                            AND d.device_type = 'site'
+                                            AND d.pvs_path_id = 'livedata'
+                                )
+                                SELECT m.metric, m.value, m.unit, m.time, m.collected_at, m.quality, m.source
+                                FROM measurements m
+                                JOIN devices d ON d.id = m.device_id
+                                CROSS JOIN latest_collection latest
+                                WHERE d.site_id = $1::uuid
+                                    AND d.device_type = 'site'
+                                    AND d.pvs_path_id = 'livedata'
+                                    AND m.collected_at = latest.collected_at
+                                ORDER BY m.metric
                 """,
                 HOME_SITE_ID,
             )

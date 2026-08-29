@@ -33,18 +33,22 @@ export function Overview({
           <div className="value">{pv == null ? "—" : formatKw(pv)}</div>
           <div className="meta">Measured production</div>
         </article>
-        <article className="stat load">
-          <div className="label">Home</div>
-          <div className="value">{load == null ? "—" : formatKw(load)}</div>
-          <div className="meta">Site load</div>
-        </article>
-        <article className={`stat grid ${gridMode}`}>
-          <div className="label">Grid</div>
-          <div className="value">{gridAbs == null ? "—" : formatKw(gridAbs)}</div>
-          <div className="meta">
-            {gridMode === "export" ? "Exporting" : gridMode === "import" ? "Importing" : "Net flow"}
-          </div>
-        </article>
+        {load != null && (
+          <article className="stat load">
+            <div className="label">Home</div>
+            <div className="value">{formatKw(load)}</div>
+            <div className="meta">Site load</div>
+          </article>
+        )}
+        {net != null && (
+          <article className={`stat grid ${gridMode}`}>
+            <div className="label">Grid</div>
+            <div className="value">{gridAbs != null ? formatKw(gridAbs) : "—"}</div>
+            <div className="meta">
+              {gridMode === "export" ? "Exporting" : gridMode === "import" ? "Importing" : "Net flow"}
+            </div>
+          </article>
+        )}
       </div>
     </section>
   );

@@ -172,9 +172,12 @@ def assemble_measurements(
     meter_obj: dict[str, Any] | None,
     inverter_obj: dict[str, Any] | None,
 ) -> CurrentMeasurements:
+    livedata = parse_livedata(livedata_obj) if livedata_obj else None
+    meters = parse_meters_flat(meter_obj) if meter_obj else []
+
     return CurrentMeasurements(
-        livedata=parse_livedata(livedata_obj) if livedata_obj else None,
-        meters=parse_meters_flat(meter_obj) if meter_obj else [],
+        livedata=livedata,
+        meters=meters,
         inverters=parse_inverters_flat(inverter_obj) if inverter_obj else [],
         collected_at=datetime.now(timezone.utc),
         parser_version="1",

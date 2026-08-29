@@ -76,12 +76,12 @@ export function PowerFlow({
   net: number | null;
 }) {
   const model = useMemo(() => {
-    if (pv == null && load == null && net == null) return null;
-    const solar = Math.max(0, pv ?? 0);
-    const home = Math.max(0, load ?? 0);
-    const gridAbs = Math.abs(net ?? 0);
-    const exporting = (net ?? 0) < -0.005;
-    const importing = (net ?? 0) > 0.005;
+    if (pv == null || load == null || net == null) return null;
+    const solar = Math.max(0, pv);
+    const home = Math.max(0, load);
+    const gridAbs = Math.abs(net);
+    const exporting = net < -0.005;
+    const importing = net > 0.005;
 
     let solarToHome = 0;
     let solarToGrid = 0;
@@ -154,6 +154,8 @@ export function PowerFlow({
     };
   }, [pv, load, net]);
 
+  if (!model) return null;
+
   return (
     <section className="section">
       <h2>Live energy flow</h2>
@@ -168,10 +170,7 @@ export function PowerFlow({
             alt="Generic home energy flow scene"
             draggable={false}
           />
-          {!model ? (
-            <p className="muted flow-empty-state">Waiting for live power readings…</p>
-          ) : (
-            <>
+          <>
               <svg
                 className="power-flow-overlay"
                 viewBox="0 0 1350 900"
@@ -301,8 +300,7 @@ export function PowerFlow({
               </span>
               <span className="flow-badge-value">{formatKw(model.gridAbs)}</span>
             </div>
-            </>
-          )}
+          </>
         </div>
       </div>
     </section>
