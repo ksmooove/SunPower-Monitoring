@@ -405,11 +405,18 @@ async def history(
 @app.get("/v1/today-history", dependencies=[Depends(require_auth)])
 async def today_history(
     repo: Annotated[Repository, Depends(get_repo)],
+    date_param: str | None = Query(None, alias="date", max_length=10),
 ) -> dict[str, Any]:
     zone = ZoneInfo(settings.site_timezone)
     now = datetime.now(zone)
-    start = datetime.combine(now.date(), datetime.min.time(), tzinfo=zone).astimezone(timezone.utc)
-    end = now.astimezone(timezone.utc)
+    try:
+        selected_date = datetime.strptime(date_param, "%Y-%m-%d").date() if date_param else now.date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"invalid date: {date_param}")
+    start = datetime.combine(selected_date, datetime.min.time(), tzinfo=zone).astimezone(timezone.utc)
+    end = now.astimezone(timezone.utc) if selected_date == now.date() else datetime.combine(
+        selected_date, datetime.max.time(), tzinfo=zone
+    ).astimezone(timezone.utc)
     rows = await repo.history(
         metric="pv_power_kw",
         device_type="site",
@@ -432,6 +439,7 @@ async def today_history(
         "metric": "pv_power_kw",
         "start": start.isoformat(),
         "end": end.isoformat(),
+        "date": selected_date.isoformat(),
         "count": len(rows),
         "points": conv(rows),
     }

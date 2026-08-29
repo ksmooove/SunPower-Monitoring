@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { DaySummary } from "../api";
 
-type Point = { time: string; value: number };
+export type Point = { time: string; value: number };
 
 function formatKw(n: number): string {
   return `${n.toFixed(2)} kW`;
@@ -15,11 +15,9 @@ function formatKwh(n: number | null | undefined): string {
 export function TodaysProduction({
   summary,
   pv,
-  points,
 }: {
   summary: DaySummary | null;
   pv: number | null;
-  points: Point[];
 }) {
   return (
     <section className="section">
@@ -43,7 +41,6 @@ export function TodaysProduction({
           <div className="meta">Highest today</div>
         </article>
       </div>
-      <DayChart points={points} />
     </section>
   );
 }

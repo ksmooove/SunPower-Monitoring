@@ -39,6 +39,13 @@ function metricValue(current: CurrentResponse | null, key: string): number | nul
   return point ? point.value : null;
 }
 
+function localDateValue(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 export default function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem("solar_monitor_theme");
@@ -57,6 +64,7 @@ export default function App() {
   const [playback, setPlayback] = useState<PlaybackResponse | null>(null);
   const [devices, setDevices] = useState<Device[]>([]);
   const [history, setHistory] = useState<Array<{ time: string; value: number }>>([]);
+  const [chartDate, setChartDate] = useState(localDateValue);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,7 +92,7 @@ export default function App() {
         api.health(),
         api.current(),
         api.devices(),
-        api.todayHistory(),
+        api.todayHistory(chartDate),
         api.daySummary(),
         api.playback(24),
         api.productionHistory(productionRange, productionPeriod),
@@ -111,7 +119,7 @@ export default function App() {
     } finally {
       setRefreshing(false);
     }
-  }, [panelPeriod, panelRange, productionPeriod, productionRange]);
+  }, [chartDate, panelPeriod, panelRange, productionPeriod, productionRange]);
 
   useEffect(() => {
     void refresh();
@@ -182,7 +190,6 @@ export default function App() {
       <TodaysProduction
         summary={daySummary}
         pv={metricValue(current, "pv_power_kw")}
-        points={history}
       />
 
       <ProductionHistory
@@ -191,6 +198,9 @@ export default function App() {
       onRangeChange={changeProductionRange}
       period={productionPeriod}
       onPeriodChange={setProductionPeriod}
+      chartPoints={history}
+      chartDate={chartDate}
+      onChartDateChange={setChartDate}
       />
 
       <PowerFlow

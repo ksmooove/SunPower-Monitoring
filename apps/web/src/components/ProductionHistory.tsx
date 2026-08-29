@@ -3,9 +3,9 @@ import type {
   ProductionHistoryResponse,
   ProductionRange,
 } from "../api";
+import { DayChart, type Point } from "./Overview";
 
 const RANGE_LABELS: Record<ProductionRange, string> = {
-  day: "Day",
   week: "Week",
   month: "Month",
   year: "Year",
@@ -60,12 +60,18 @@ export function ProductionHistory({
   onRangeChange,
   period,
   onPeriodChange,
+  chartPoints,
+  chartDate,
+  onChartDateChange,
 }: {
   data: ProductionHistoryResponse | null;
   range: ProductionRange;
   onRangeChange: (range: ProductionRange) => void;
   period: string | undefined;
   onPeriodChange: (period: string | undefined) => void;
+  chartPoints: Point[];
+  chartDate: string;
+  onChartDateChange: (date: string) => void;
 }) {
   const maxKwh = useMemo(() => {
     if (!data?.points.length) return 1;
@@ -79,18 +85,15 @@ export function ProductionHistory({
   }, [data]);
 
   const title =
-    range === "day"
-      ? "Today's production"
-      : range === "week"
-        ? "Daily production — last 7 days"
-        : range === "month"
-          ? "Daily production — this month"
-          : range === "year"
-            ? "Monthly production — this year"
-            : "Lifetime production";
+    range === "week"
+      ? "Daily production — last 7 days"
+      : range === "month"
+        ? "Daily production — this month"
+        : range === "year"
+          ? "Monthly production — this year"
+          : "Lifetime production";
 
-  const periodType =
-    range === "day" ? "date" : range === "week" ? "week" : range === "month" ? "month" : "number";
+  const periodType = range === "week" ? "week" : range === "month" ? "month" : "number";
   const periodPlaceholder = range === "year" ? "Year" : undefined;
 
   return (
@@ -154,7 +157,7 @@ export function ProductionHistory({
                   ? "Generated this month"
                   : range === "week"
                     ? "Generated in this period"
-                    : "Generated today"}
+                    : "Generated in this period"}
           </span>
 
           <strong>
@@ -237,6 +240,16 @@ export function ProductionHistory({
           </>
         )}
       </div>
+      <div className="production-period-control chart-period-control">
+        <label htmlFor="production-chart-date">Chart date</label>
+        <input
+          id="production-chart-date"
+          type="date"
+          value={chartDate}
+          onChange={(event) => onChartDateChange(event.target.value)}
+        />
+      </div>
+      <DayChart points={chartPoints} />
     </section>
   );
 }
