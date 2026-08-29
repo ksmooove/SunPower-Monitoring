@@ -101,11 +101,12 @@ export function PowerFlow({
     const durationFor = (kw: number) =>
       Math.max(0.45, Math.min(1.8, 1.35 / Math.sqrt(kw + 0.08)));
 
-    // Circular pair: upper sun→roof, lower house↔pole.
-    // Solar starts clear of the sun disc + rays (not touching); roof ≈ (705, 350); pole ≈ (1175, 640).
-    const solarArc = "M 1125 175 Q 880 45, 705 350";
-    const exportArc = "M 790 545 Q 1010 800, 1175 640";
-    const importArc = "M 1175 640 Q 1010 800, 790 545";
+    // The scene is laid out as: sun on the left, roof array in the center-right, home on the lower-right,
+    // and the grid pole on the far right. Arrow direction should reflect real energy flow: solar => roof,
+    // roof/home => grid when exporting, and grid => home when importing.
+    const solarArc = "M 200 150 Q 440 110, 820 355";
+    const exportArc = "M 980 560 Q 1090 610, 1230 575";
+    const importArc = "M 1230 575 Q 1090 610, 980 560";
 
     const edges: FlowEdge[] = [];
     if (solar > 0.005) {
@@ -116,8 +117,7 @@ export function PowerFlow({
         color: SOLAR_COLOR,
         core: SOLAR_CORE,
         durationSec: durationFor(solar),
-        // Tangent into roof from control (880,45)→(705,350)
-        tip: { x: 705, y: 350, rotate: Math.atan2(305, -175) * (180 / Math.PI) },
+        tip: { x: 820, y: 355, rotate: Math.atan2(205, 620) * (180 / Math.PI) },
       });
     }
     if (solarToGrid > 0.005) {
@@ -128,7 +128,7 @@ export function PowerFlow({
         color: GRID_COLOR,
         core: GRID_CORE,
         durationSec: durationFor(solarToGrid),
-        tip: { x: 1175, y: 640, rotate: Math.atan2(-160, 165) * (180 / Math.PI) },
+        tip: { x: 1230, y: 575, rotate: Math.atan2(15, 250) * (180 / Math.PI) },
       });
     }
     if (gridToHome > 0.005) {
@@ -139,7 +139,7 @@ export function PowerFlow({
         color: GRID_COLOR,
         core: GRID_CORE,
         durationSec: durationFor(gridToHome),
-        tip: { x: 790, y: 545, rotate: Math.atan2(-255, -220) * (180 / Math.PI) },
+        tip: { x: 980, y: 560, rotate: Math.atan2(-15, -250) * (180 / Math.PI) },
       });
     }
 

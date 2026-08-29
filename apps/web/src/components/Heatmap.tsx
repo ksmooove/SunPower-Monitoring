@@ -101,8 +101,8 @@ export function Heatmap({
 
   const subtitle = summary
     ? summary.is_lifetime
-      ? `Lifetime energy generated · ${summary.timezone}`
-      : `Energy generated · ${summary.timezone}`
+      ? "Lifetime energy generated"
+      : "Energy generated"
     : "Loading panel history…";
 
   return (
