@@ -51,13 +51,6 @@ export function Overview({
 }
 
 export function TodayEnergy({ summary }: { summary: DaySummary | null }) {
-  const gridLabel =
-    summary?.grid_direction === "export"
-      ? "Exported to grid"
-      : summary?.grid_direction === "import"
-        ? "Imported from grid"
-        : "Grid net";
-
   return (
     <section className="section">
       <h2>Today ({summary?.local_date ?? "…"})</h2>
@@ -69,42 +62,43 @@ export function TodayEnergy({ summary }: { summary: DaySummary | null }) {
               ? "…"
               : formatKwh(summary?.generated_kwh)}
           </div>
-          <div className="meta">
-            Calendar day · {summary?.timezone ?? "America/Los_Angeles"} · measured delta
-          </div>
         </article>
-        <article
-          className={`stat grid ${
-            summary?.grid_direction === "export"
-              ? "export"
-              : summary?.grid_direction === "import"
-                ? "import"
-                : ""
-          }`}
-        >
-          <div className="label">{gridLabel}</div>
-          <div className="value">
-            {summary?.grid_insufficient_samples
-              ? "…"
-              : formatKwh(summary?.grid_kwh)}
-          </div>
-          <div className="meta">
-            {summary?.grid_direction === "export"
-              ? "Net to utility today"
-              : summary?.grid_direction === "import"
-                ? "Net from utility today"
-                : "Needs more samples today"}
-          </div>
-        </article>
-        <article className="stat load">
-          <div className="label">Home use</div>
-          <div className="value">
-            {summary?.home_load_insufficient_samples
-              ? "…"
-              : formatKwh(summary?.home_load_kwh)}
-          </div>
-          <div className="meta">Site load energy today</div>
-        </article>
+        {false && (
+          <article
+            className={`stat grid ${
+              summary?.grid_direction === "export"
+                ? "export"
+                : summary?.grid_direction === "import"
+                  ? "import"
+                  : ""
+            }`}
+          >
+            <div className="label">{gridLabel}</div>
+            <div className="value">
+              {summary?.grid_insufficient_samples
+                ? "…"
+                : formatKwh(summary?.grid_kwh)}
+            </div>
+            <div className="meta">
+              {summary?.grid_direction === "export"
+                ? "Net to utility today"
+                : summary?.grid_direction === "import"
+                  ? "Net from utility today"
+                  : "Needs more samples today"}
+            </div>
+          </article>
+        )}
+        {false && (
+          <article className="stat load">
+            <div className="label">Home use</div>
+            <div className="value">
+              {summary?.home_load_insufficient_samples
+                ? "…"
+                : formatKwh(summary?.home_load_kwh)}
+            </div>
+            <div className="meta">Site load energy today</div>
+          </article>
+        )}
       </div>
     </section>
   );

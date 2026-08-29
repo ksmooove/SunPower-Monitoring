@@ -233,9 +233,6 @@ export function ProductionHistory({
 
             <div className="production-unit">
               Values are kWh
-              {data.timezone
-                ? ` · ${data.timezone}`
-                : ""}
             </div>
           </>
         )}

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 900" role="img" aria-label="Generic home energy flow diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#eef7ff"/>
+      <stop offset="100%" stop-color="#dfece3"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#dce6d3"/>
+      <stop offset="100%" stop-color="#b8c9a3"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#c7d8df"/>
+      <stop offset="100%" stop-color="#91a7b5"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7f5f0"/>
+      <stop offset="100%" stop-color="#dfd8cc"/>
+    </linearGradient>
+    <linearGradient id="solar" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#f7d267"/>
+      <stop offset="100%" stop-color="#f4a729"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1350" height="900" fill="url(#sky)"/>
+  <circle cx="170" cy="150" r="68" fill="#f9d978" opacity="0.8"/>
+  <circle cx="226" cy="172" r="12" fill="#fff3b3" opacity="0.7"/>
+  <circle cx="126" cy="126" r="10" fill="#fff3b3" opacity="0.7"/>
+
+  <rect x="0" y="610" width="1350" height="290" fill="url(#ground)"/>
+
+  <g opacity="0.9">
+    <rect x="130" y="260" width="175" height="80" rx="8" fill="url(#solar)"/>
+    <rect x="152" y="282" width="131" height="38" rx="4" fill="#f7e9b0" opacity="0.85"/>
+    <line x1="152" y1="292" x2="282" y2="292" stroke="#d0881a" stroke-width="3" opacity="0.8"/>
+    <line x1="152" y1="306" x2="282" y2="306" stroke="#d0881a" stroke-width="3" opacity="0.8"/>
+    <line x1="152" y1="320" x2="282" y2="320" stroke="#d0881a" stroke-width="3" opacity="0.8"/>
+  </g>
+
+  <g>
+    <path d="M 730 220 L 1180 220 L 1220 290 L 690 290 Z" fill="url(#roof)"/>
+    <rect x="690" y="290" width="540" height="300" rx="12" fill="url(#wall)"/>
+    <rect x="740" y="338" width="182" height="142" rx="8" fill="#c9d9ea"/>
+    <rect x="956" y="338" width="182" height="142" rx="8" fill="#c9d9ea"/>
+    <rect x="780" y="490" width="140" height="100" rx="8" fill="#d8e5ef"/>
+    <rect x="950" y="490" width="140" height="100" rx="8" fill="#d8e5ef"/>
+    <path d="M 750 294 L 750 610" stroke="#9babba" stroke-width="3" opacity="0.7"/>
+    <path d="M 930 294 L 930 610" stroke="#9babba" stroke-width="3" opacity="0.7"/>
+    <path d="M 1110 294 L 1110 610" stroke="#9babba" stroke-width="3" opacity="0.7"/>
+    <path d="M 690 610 L 1230 610" stroke="#7f8d6d" stroke-width="8" opacity="0.6"/>
+  </g>
+
+  <g>
+    <rect x="1185" y="315" width="95" height="220" rx="10" fill="#d9dee4"/>
+    <rect x="1210" y="260" width="42" height="55" rx="8" fill="#b8c7d3"/>
+    <path d="M 1206 315 L 1248 315 M 1206 380 L 1248 380 M 1206 445 L 1248 445" stroke="#8aa0b0" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+    <circle cx="1232" cy="570" r="14" fill="#7bd67a"/>
+  </g>
+
+  <g opacity="0.7">
+    <path d="M 535 610 C 610 560, 655 540, 690 520" fill="none" stroke="#a8c7dd" stroke-width="4"/>
+    <path d="M 1238 610 C 1280 575, 1320 540, 1336 492" fill="none" stroke="#a8c7dd" stroke-width="4"/>
+  </g>
+
+  <g opacity="0.28">
+    <path d="M 520 486 L 534 500 L 520 514" fill="none" stroke="#6a7b8a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 548 486 L 562 500 L 548 514" fill="none" stroke="#6a7b8a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 576 486 L 590 500 L 576 514" fill="none" stroke="#6a7b8a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

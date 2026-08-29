@@ -20,20 +20,6 @@ This project collects telemetry from **your own** PVS6 on **your own** LAN, stor
 
 Compose defaults to **fixture** replay (safe, no PVS contact). Live collection uses `COLLECTOR_SOURCE=varserver` plus `PVS_PASSWORD` in a gitignored `.env`.
 
-## Site profile
-
-| Item | Value |
-|------|--------|
-| Supervisor | SunPower PVS6 |
-| Firmware | Build 61846 (authenticated varserver local API) |
-| Array | 44 × SunPower X-Series 360 W with microinverters |
-| Meters | Production (`PVS6M0400p`) + consumption (`PVS6M0400c`) |
-| Battery | None |
-| PVS LAN path | Wi-Fi on home LAN (set in local `.env`) |
-| Display timezone | `SITE_TIMEZONE` from `.env` (timestamps stored in UTC) |
-| Host | Windows PC via Docker Compose |
-| Cloud | DigitalOcean Ubuntu droplet (Timescale + FastAPI + Caddy TLS) |
-
 ## Architecture
 
 ```

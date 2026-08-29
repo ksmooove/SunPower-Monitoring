@@ -99,12 +99,19 @@ input {
 
 .icon-btn {
   border: 1px solid var(--line);
-  background: var(--panel);
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
   color: var(--ink);
   border-radius: 999px;
   padding: 0.55rem 0.9rem;
   cursor: pointer;
   backdrop-filter: blur(8px);
+  box-shadow: 0 6px 16px rgba(28, 36, 48, 0.06);
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
 }
 
 .section {
@@ -173,7 +180,7 @@ input {
 }
 
 .panel {
-  background: var(--panel);
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
   border: 1px solid var(--line);
   border-radius: 1rem;
   padding: 1rem;
@@ -268,6 +275,11 @@ input {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  width: fit-content;
 }
 
 .production-header {
@@ -290,51 +302,72 @@ input {
 .production-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.4rem;
+  padding: 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
 }
 
 .production-period-control {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
 }
 
 .production-period-control input {
   min-width: 9rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 0.65rem;
+  padding: 0.48rem 0.65rem;
+  font: inherit;
+}
+
+.production-period-control input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 1px;
 }
 
 .production-period-clear {
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
   background: transparent;
   color: var(--accent);
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font: inherit;
 }
 
 .production-tab {
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   background: transparent;
   color: var(--ink);
   border-radius: 999px;
   padding: 0.45rem 0.8rem;
   cursor: pointer;
+  font-weight: 600;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.production-tab:hover {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .production-tab.active {
-  background: color-mix(
-    in srgb,
-    var(--accent) 22%,
-    transparent
-  );
-
-  border-color: color-mix(
-    in srgb,
-    var(--accent) 55%,
-    var(--line)
-  );
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .production-history-panel {
@@ -452,13 +485,14 @@ input {
 .toolbar button,
 .toolbar a.button,
 .toolbar button.button {
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   background: transparent;
   color: var(--ink);
   border-radius: 999px;
   padding: 0.45rem 0.85rem;
   text-decoration: none;
   cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
 .toolbar button:disabled {
@@ -467,8 +501,9 @@ input {
 }
 
 .toolbar button.active {
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .health-row {
@@ -607,7 +642,9 @@ input {
   aspect-ratio: 16 / 9;
   border-radius: 1rem;
   overflow: hidden;
-  background: #f3eee6;
+  background: linear-gradient(180deg, #eef5f9 0%, #e8efe4 100%);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), var(--shadow);
 }
 
 .power-flow-scene {
@@ -649,42 +686,43 @@ input {
   position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 0.05rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: 0.75rem;
-  background: rgba(255, 252, 247, 0.94);
-  border: 1px solid rgba(28, 36, 48, 0.12);
-  box-shadow: 0 8px 20px rgba(28, 36, 48, 0.08);
-  backdrop-filter: blur(6px);
+  gap: 0.08rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--panel) 90%, rgba(255,255,255,0.6));
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  box-shadow: 0 10px 20px rgba(28, 36, 48, 0.08);
+  backdrop-filter: blur(8px);
   line-height: 1.15;
   text-align: center;
 }
 
 .flow-badge-title {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .flow-badge-value {
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
   font-weight: 700;
-  color: #1c2430;
+  color: var(--ink);
 }
 
 .flow-badge-value.solar {
-  color: #c47b12;
+  color: var(--accent);
 }
 
 .flow-badge-value.home {
-  color: #111827;
+  color: var(--ink);
 }
 
 .flow-badge-grid.export .flow-badge-value,
 .flow-badge-grid.import .flow-badge-value {
-  color: #2f9e3a;
+  color: var(--grid-export);
 }
 
 /* Centered above the upper (solar) arc */

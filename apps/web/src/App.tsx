@@ -15,7 +15,6 @@ import {
   type ProductionRange,
 } from "./api";
 import { DayChart, Overview, TodayEnergy } from "./components/Overview";
-import { DayScrubber } from "./components/DayScrubber";
 import { PowerFlow } from "./components/PowerFlow";
 import { Heatmap } from "./components/Heatmap";
 import { ProductionHistory } from "./components/ProductionHistory";
@@ -240,8 +239,6 @@ export default function App() {
           onDevicesChange={setDevices}
         />
       )}
-
-      <DayScrubber playback={playback} devices={devices} />
 
       <section className="settings">
         <h2>API token (optional)</h2>

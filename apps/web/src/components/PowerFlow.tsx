@@ -167,8 +167,8 @@ export function PowerFlow({
           <div className="power-flow-stage">
             <img
               className="power-flow-scene"
-              src="/images/power-flow-scene-landscape.jpg"
-              alt="Home energy flow scene"
+              src="/images/power-flow-scene-landscape.svg"
+              alt="Generic home energy flow scene"
               draggable={false}
             />
             <svg
