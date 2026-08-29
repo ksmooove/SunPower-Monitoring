@@ -27,21 +27,24 @@ def compute_inverter_energy_delta(
     if start is None:
         return round(float(ordered[-1][1]), 3)
 
-    previous: float | None = None
+    previous: tuple[datetime, float] | None = None
     generated = 0.0
+    max_power_kw = 0.36
 
     for ts, raw_value in ordered:
         value = float(raw_value)
         if ts < start:
-            previous = value
+            previous = (ts, value)
             continue
         if ts > end:
             break
-        if previous is not None and value >= previous:
-            generated += value - previous
-        # A lower reading indicates that the lifetime counter reset. Start a
-        # new segment without charging the discontinuity as production.
-        previous = value
+        if previous is not None and value >= previous[1]:
+            increment = value - previous[1]
+            elapsed_hours = max(0.0, (ts - previous[0]).total_seconds() / 3600)
+            physically_possible = max_power_kw * elapsed_hours * 1.25
+            if increment <= physically_possible:
+                generated += increment
+        previous = (ts, value)
 
     return round(generated, 3)
 

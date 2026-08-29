@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { CurrentResponse, Device, InverterSummaryResponse, ProductionRange } from "../api";
+import type { Device, InverterSummaryResponse, ProductionRange } from "../api";
 import { api } from "../api";
 
 /** Violet (low) → green (high); returns background and whether text should be light. */
@@ -27,17 +27,19 @@ function defaultLayout(index: number, cols: number): { row: number; col: number 
 }
 
 export function Heatmap({
-  current,
   summary,
   range,
   onRangeChange,
+  period,
+  onPeriodChange,
   devices,
   onDevicesChange,
 }: {
-  current: CurrentResponse;
   summary: InverterSummaryResponse | null;
   range: ProductionRange;
   onRangeChange: (range: ProductionRange) => void;
+  period: string | undefined;
+  onPeriodChange: (period: string | undefined) => void;
   devices: Device[];
   onDevicesChange: (devices: Device[]) => void;
 }) {
@@ -125,6 +127,25 @@ export function Heatmap({
           ))}
         </div>
       </div>
+      {range !== "all" && (
+        <div className="production-period-control">
+          <label htmlFor="panel-period">Choose {range}</label>
+          <input
+            id="panel-period"
+            type={range === "day" ? "date" : range === "week" ? "week" : range === "month" ? "month" : "number"}
+            min={range === "year" ? "2000" : undefined}
+            max={range === "year" ? "2100" : undefined}
+            placeholder={range === "year" ? "Year" : undefined}
+            value={period ?? ""}
+            onChange={(event) => onPeriodChange(event.target.value || undefined)}
+          />
+          {period && (
+            <button type="button" className="production-period-clear" onClick={() => onPeriodChange(undefined)}>
+              Current
+            </button>
+          )}
+        </div>
+      )}
       <div className="panel">
         <p className="muted" style={{ marginTop: 0 }}>
           Violet = low energy, green = high. Values are kilowatt-hours (kWh) generated over the

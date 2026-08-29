@@ -51,6 +51,7 @@ export default function App() {
   const [productionRange, setProductionRange] = useState<ProductionRange>("week");
   const [productionPeriod, setProductionPeriod] = useState<string | undefined>();
   const [panelRange, setPanelRange] = useState<ProductionRange>("day");
+  const [panelPeriod, setPanelPeriod] = useState<string | undefined>();
   const [productionHistory, setProductionHistory] = useState<ProductionHistoryResponse | null>(null);
   const [inverterSummary, setInverterSummary] = useState<InverterSummaryResponse | null>(null);
   const [playback, setPlayback] = useState<PlaybackResponse | null>(null);
@@ -66,6 +67,11 @@ export default function App() {
   function changeProductionRange(range: ProductionRange) {
     setProductionRange(range);
     setProductionPeriod(undefined);
+  }
+
+  function changePanelRange(range: ProductionRange) {
+    setPanelRange(range);
+    setPanelPeriod(undefined);
   }
 
   useEffect(() => {
@@ -84,7 +90,7 @@ export default function App() {
         api.daySummary(),
         api.playback(24),
         api.productionHistory(productionRange, productionPeriod),
-        api.inverterSummary(panelRange),
+        api.inverterSummary(panelRange, panelPeriod),
       ]);
       setHealth(h);
       setCurrent(c);
@@ -107,7 +113,7 @@ export default function App() {
     } finally {
       setRefreshing(false);
     }
-  }, [hours, panelRange, productionPeriod, productionRange]);
+  }, [hours, panelPeriod, panelRange, productionPeriod, productionRange]);
 
   useEffect(() => {
     void refresh();
@@ -231,10 +237,11 @@ export default function App() {
 
       {current && (
         <Heatmap
-          current={current}
           summary={inverterSummary}
           range={panelRange}
-          onRangeChange={setPanelRange}
+          onRangeChange={changePanelRange}
+          period={panelPeriod}
+          onPeriodChange={setPanelPeriod}
           devices={devices}
           onDevicesChange={setDevices}
         />

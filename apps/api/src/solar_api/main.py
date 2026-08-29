@@ -307,6 +307,7 @@ async def production_history(
 async def inverter_summary(
     repo: Annotated[Repository, Depends(get_repo)],
     range: str = Query("week", pattern="^(day|week|month|year|all)$"),
+    period: str | None = Query(None, max_length=10),
 ) -> dict[str, Any]:
     """Per-inverter generated energy (kWh) over a calendar range.
 
@@ -316,26 +317,22 @@ async def inverter_summary(
     zone = ZoneInfo(settings.site_timezone)
     today = datetime.now(zone).date()
 
-    if range == "day":
-        start_date: date | None = today
-    elif range == "week":
-        start_date = today - timedelta(days=6)
-    elif range == "month":
-        start_date = today.replace(day=1)
-    elif range == "year":
-        start_date = today.replace(month=1, day=1)
-    else:
-        start_date = None
+    start_date, end_date = selected_period_dates(range, period, today)
 
     start = (
         datetime.combine(start_date, datetime.min.time(), tzinfo=zone).astimezone(timezone.utc)
         if start_date is not None
         else None
     )
-    end = datetime.now(timezone.utc)
+    end = (
+        datetime.combine(end_date, datetime.max.time(), tzinfo=zone).astimezone(timezone.utc)
+        if period and range != "all"
+        else datetime.now(timezone.utc)
+    )
     data = await repo.inverter_energy_summary(start=start, end=end)
     return {
         "range": range,
+        "period": period,
         "timezone": settings.site_timezone,
         "unit": "kWh",
         "is_lifetime": start is None,

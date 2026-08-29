@@ -157,6 +157,7 @@ export type ProductionHistoryResponse = {
 
 export type InverterSummaryResponse = {
   range: ProductionRange;
+  period?: string | null;
   timezone: string;
   unit: "kWh";
   is_lifetime: boolean;
@@ -189,9 +190,9 @@ export const api = {
     apiFetch<ProductionHistoryResponse>(
       `/v1/production-history?range=${range}${period ? `&period=${encodeURIComponent(period)}` : ""}`,
     ),
-  inverterSummary: (range: ProductionRange) =>
+  inverterSummary: (range: ProductionRange, period?: string) =>
     apiFetch<InverterSummaryResponse>(
-      `/v1/inverter-summary?range=${range}`,
+      `/v1/inverter-summary?range=${range}${period ? `&period=${encodeURIComponent(period)}` : ""}`,
     ),
   playback: (hours = 24) => apiFetch<PlaybackResponse>(`/v1/playback?hours=${hours}`),
   history: (metric: string, hours = 24) =>
