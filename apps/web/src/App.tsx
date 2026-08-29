@@ -50,7 +50,7 @@ export default function App() {
   const [daySummary, setDaySummary] = useState<DaySummary | null>(null);
   const [productionRange, setProductionRange] = useState<ProductionRange>("week");
   const [productionPeriod, setProductionPeriod] = useState<string | undefined>();
-  const [panelRange, setPanelRange] = useState<ProductionRange>("week");
+  const [panelRange, setPanelRange] = useState<ProductionRange>("day");
   const [productionHistory, setProductionHistory] = useState<ProductionHistoryResponse | null>(null);
   const [inverterSummary, setInverterSummary] = useState<InverterSummaryResponse | null>(null);
   const [playback, setPlayback] = useState<PlaybackResponse | null>(null);

@@ -8,6 +8,46 @@ import asyncpg
 from solar_store.ids import HOME_SITE_ID
 
 
+def compute_inverter_energy_delta(
+    samples: list[tuple[datetime, float]],
+    start: datetime | None,
+    end: datetime,
+) -> float:
+    """Return kWh generated for an inverter over the selected period.
+
+    We compare the last cumulative lifetime reading at or before the period end to the
+    last reading before the period start. If no reading existed before the start, we fall
+    back to the first reading within the selected window so we still show a sensible
+    range total instead of a skewed negative or inflated value.
+    """
+    if not samples:
+        return 0.0
+
+    ordered = sorted(samples, key=lambda item: item[0])
+    if start is None:
+        return round(float(ordered[-1][1]), 3)
+
+    start_value: float | None = None
+    end_value: float | None = None
+
+    for ts, value in ordered:
+        if ts < start:
+            start_value = float(value)
+        if ts <= end:
+            end_value = float(value)
+
+    if start_value is None:
+        first_in_window = next((float(value) for ts, value in ordered if ts >= start), None)
+        if first_in_window is None:
+            return 0.0
+        start_value = first_in_window
+
+    if end_value is None:
+        end_value = float(ordered[-1][1])
+
+    return round(max(0.0, end_value - start_value), 3)
+
+
 class Repository:
     def __init__(self, pool: asyncpg.Pool) -> None:
         self._pool = pool
@@ -256,52 +296,34 @@ class Repository:
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                WITH samples AS (
-                    SELECT d.pvs_path_id, m.time, m.value
-                    FROM devices d
-                    JOIN measurements m ON m.device_id = d.id
-                    WHERE d.site_id = $1::uuid
-                    AND d.device_type = 'inverter'
-                    AND m.metric = 'lifetime_energy_kwh'
-                    AND m.time < $3
-                    AND ($2::timestamptz IS NULL OR m.time >= $2)
-                ),
-                ranked AS (
-                    SELECT pvs_path_id, time, value,
-                        ROW_NUMBER() OVER (PARTITION BY pvs_path_id ORDER BY time ASC) AS first_rank
-                    FROM samples
-                )
-                SELECT
-                    s.pvs_path_id,
-                    MAX(r.value) FILTER (WHERE r.first_rank = 1) AS first_value,
-                    MAX(s.value) AS max_value
-                FROM samples s
-                LEFT JOIN ranked r ON r.pvs_path_id = s.pvs_path_id AND r.first_rank = 1
-                GROUP BY s.pvs_path_id
+                SELECT d.pvs_path_id, m.time, m.value
+                FROM devices d
+                JOIN measurements m ON m.device_id = d.id
+                WHERE d.site_id = $1::uuid
+                  AND d.device_type = 'inverter'
+                  AND m.metric = 'lifetime_energy_kwh'
+                  AND m.time <= $2
+                ORDER BY d.pvs_path_id::int ASC, m.time ASC
                 """,
                 HOME_SITE_ID,
-                start,
                 end,
             )
 
-        values: dict[str, float | None] = {}
+        by_inverter: dict[str, list[tuple[datetime, float]]] = {}
         for row in rows:
-            first_v, max_v = row["first_value"], row["max_value"]
-            if max_v is None:
-                values[str(row["pvs_path_id"])] = None
-            elif start is None:
-                values[str(row["pvs_path_id"])] = round(float(max_v), 3)
+            pvs_path_id = str(row["pvs_path_id"])
+            by_inverter.setdefault(pvs_path_id, []).append((row["time"], float(row["value"])))
+
+        values: dict[str, float | None] = {}
+        for pvs_path_id, samples in by_inverter.items():
+            if not samples:
+                values[pvs_path_id] = None
+                continue
+
+            if start is None:
+                values[pvs_path_id] = round(float(samples[-1][1]), 3)
             else:
-                values[str(row["pvs_path_id"])] = round(max(0.0, float(max_v) - float(first_v)), 3)
-
-        return {
-            "start": start.isoformat() if start else None,
-            "end": end.isoformat(),
-            "values_kwh": values,
-            "max_kwh": max((v for v in values.values() if v is not None), default=0.0),
-        }
-
-    async def day_energy_summary(
+                values[pvs_path_id] = compute_inverter_energy_delta(samples, start, end)
         self,
         *,
         timezone_name: str = "America/Los_Angeles",
