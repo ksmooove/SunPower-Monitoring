@@ -48,7 +48,8 @@ On the droplet:
 
 ```bash
 apt update && apt upgrade -y
-timedatectl set-timezone America/Los_Angeles
+# Set the system timezone to match the home site's configured SITE_TIMEZONE if desired.
+timedatectl set-timezone UTC
 hostnamectl set-hostname solar-cloud
 ```
 

@@ -20,7 +20,7 @@ This project collects telemetry from **your own** PVS6 on **your own** LAN, stor
 
 Compose defaults to **fixture** replay (safe, no PVS contact). Live collection uses `COLLECTOR_SOURCE=varserver` plus `PVS_PASSWORD` in a gitignored `.env`.
 
-## Site profile (sanitized)
+## Site profile
 
 | Item | Value |
 |------|--------|
@@ -29,8 +29,8 @@ Compose defaults to **fixture** replay (safe, no PVS contact). Live collection u
 | Array | 44 × SunPower X-Series 360 W with microinverters |
 | Meters | Production (`PVS6M0400p`) + consumption (`PVS6M0400c`) |
 | Battery | None |
-| PVS LAN path | Wi-Fi on home LAN (`192.168.1.96` in local `.env`) |
-| Display timezone | America/Los_Angeles (timestamps stored in UTC) |
+| PVS LAN path | Wi-Fi on home LAN (set in local `.env`) |
+| Display timezone | `SITE_TIMEZONE` from `.env` (timestamps stored in UTC) |
 | Host | Windows PC via Docker Compose |
 | Cloud | DigitalOcean Ubuntu droplet (Timescale + FastAPI + Caddy TLS) |
 
@@ -55,9 +55,9 @@ Home is the source of truth. The droplet is a **read replica / mobile API**, not
 **Prerequisites:** Docker Desktop running on Windows.
 
 ```powershell
-cd c:\Users\tony\Projects\solar-monitor
+cd <path-to-sunpowermonitor>
 Copy-Item .env.example .env
-# Edit .env: set POSTGRES_PASSWORD at minimum; for live PVS see below
+# Edit .env: set POSTGRES_PASSWORD and SITE_TIMEZONE at minimum; for live PVS see below
 docker compose up --build -d
 ```
 
@@ -69,15 +69,26 @@ Then open:
 ### Import SunPower PDF reports on the runtime workstation
 
 Historical monthly reports can be imported without changing live collector data. The importer stores
-the report totals and daily energy with `historical_report` provenance, and production history uses
-those daily values only where live cumulative samples are missing.
+the report totals and daily rows in the database, and production history uses those values only when
+needed.
 
-The PDF files and database stay on the workstation that runs Docker. They do not need to be copied
-to the build machine or committed. On that workstation, pull the code and start the stack so
-migration `003_historical_reports.sql` runs:
+By default, report rows are used as a fallback for dates where the collector has no valid cumulative
+samples. If you want a report to override the collector for the same local day, pass
+`--prefer-report` when importing:
 
 ```powershell
-git pull origin fix-heatmap
+.\.venv\Scripts\python.exe scripts\import_sunpower_reports.py C:\path\to\reports --database-url $env:DATABASE_URL --prefer-report
+```
+
+That flag does not delete or rewrite collector measurements. It only marks the imported report rows as
+preferred so the app prefers the report day values during reads for matching dates.
+
+The PDF files and database stay on the workstation that runs Docker. They do not need to be copied
+to the build machine or committed. On that workstation, pull the code and start the stack so the
+historical-report migrations run:
+
+```powershell
+git pull origin <your-branch>
 docker compose up -d --build
 
 py -3.12 -m venv .venv
@@ -91,6 +102,8 @@ The command is safe to rerun. It expects text-extractable PDFs whose daily rows 
 energy kWh, and maximum AC power kW, like the SunPower monthly report format. The importer stores
 site-level daily production; these reports do not contain enough information to reconstruct
 individual panel production.
+
+You can check the service health and current values after importing:
 
 ```powershell
 curl.exe -s http://127.0.0.1:8000/health

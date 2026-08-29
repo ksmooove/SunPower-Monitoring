@@ -52,7 +52,7 @@ flowchart LR
 
 ## Data principles
 
-- Timestamps stored in **UTC**; display in `America/Los_Angeles`.
+- Timestamps stored in **UTC**; display in the configured `SITE_TIMEZONE`.
 - Preserve source cumulative energy separately from estimated values.
 - Idempotent ingestion; mark measured vs aggregated vs estimated.
 - Configurable raw-payload retention for parser debugging.

@@ -6,7 +6,7 @@ See also [adr/0002-measurement-schema.md](adr/0002-measurement-schema.md).
 
 | Table | Purpose |
 |-------|---------|
-| `sites` | Installation (seeded `Home`, TZ `America/Los_Angeles`) |
+| `sites` | Installation (seeded `Home`, TZ from `SITE_TIMEZONE`) |
 | `supervisors` | PVS6 supervisor metadata |
 | `devices` | `site` / `meter` / `inverter` identities (`pvs_path_id`) |
 | `measurements` | Timescale hypertable of metric samples (UTC) |

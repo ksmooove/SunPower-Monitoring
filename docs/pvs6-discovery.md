@@ -20,7 +20,7 @@
 | Battery / SunVault | **None** (livedata ESS fields `nan`) | High |
 | Consumption monitoring | **Yes** — livedata `site_load_*` + meter index `1` model `PVS6M0400c` | High |
 | Production meter | Meter index `0` model `PVS6M0400p` | High |
-| Display timezone | America/Los_Angeles | Chosen |
+| Display timezone | `SITE_TIMEZONE` | Chosen |
 | Always-on host | Windows PC | High |
 
 ---

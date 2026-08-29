@@ -32,7 +32,7 @@ Canonical export: [openapi.json](./api/openapi.json) (refresh from a running API
 |--------|------|--------|
 | GET | `/health` | No auth required |
 | GET | `/v1/current` | Live livedata + inverters |
-| GET | `/v1/day-summary` | Calendar-day energy (America/Los_Angeles) |
+| GET | `/v1/day-summary` | Calendar-day energy in the configured `SITE_TIMEZONE` |
 | GET | `/v1/playback?hours=` | Heatmap scrubber frames |
 | GET | `/v1/history?...` | Time series |
 | GET | `/v1/devices` | Device list + layout |

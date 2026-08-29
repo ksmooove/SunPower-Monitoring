@@ -34,7 +34,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-solar}:${POSTGRES_PASSWORD:-change-me-locally}@db:5432/${POSTGRES_DB:-solar_monitor}
       API_AUTH_TOKEN: ${API_AUTH_TOKEN:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
-      SITE_TIMEZONE: ${SITE_TIMEZONE:-America/Los_Angeles}
+      SITE_TIMEZONE: ${SITE_TIMEZONE}
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:
