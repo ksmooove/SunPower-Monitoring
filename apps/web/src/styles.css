@@ -361,9 +361,22 @@ input {
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--ink);
+  color-scheme: light;
   border-radius: 0.65rem;
   padding: 0.48rem 0.65rem;
   font: inherit;
+}
+
+.production-period-control input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+html[data-theme="dark"] .production-period-control input {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] .production-period-control input::-webkit-calendar-picker-indicator {
+  filter: none;
 }
 
 .production-period-control input:focus {
