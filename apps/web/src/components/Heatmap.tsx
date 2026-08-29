@@ -111,7 +111,7 @@ export function Heatmap({
     <section className="section">
       <div className="production-header">
         <div>
-          <h2>Panel heatmap</h2>
+          <h2>Panel Heatmap</h2>
           <p className="muted production-subtitle">{subtitle}</p>
         </div>
         <div className="production-tabs">

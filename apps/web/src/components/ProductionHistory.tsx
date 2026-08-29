@@ -5,7 +5,7 @@ import type {
 } from "../api";
 import { DayChart, type Point } from "./Overview";
 
-const RANGE_LABELS: Record<ProductionRange, string> = {
+const RANGE_LABELS: Partial<Record<ProductionRange, string>> = {
   week: "Week",
   month: "Month",
   year: "Year",
@@ -240,14 +240,17 @@ export function ProductionHistory({
           </>
         )}
       </div>
-      <div className="production-period-control chart-period-control">
-        <label htmlFor="production-chart-date">Chart date</label>
-        <input
-          id="production-chart-date"
-          type="date"
-          value={chartDate}
-          onChange={(event) => onChartDateChange(event.target.value)}
-        />
+      <div className="chart-controls">
+        <h3>Production Chart</h3>
+        <div className="production-period-control chart-period-control">
+          <label htmlFor="production-chart-date">Chart date</label>
+          <input
+            id="production-chart-date"
+            type="date"
+            value={chartDate}
+            onChange={(event) => onChartDateChange(event.target.value)}
+          />
+        </div>
       </div>
       <DayChart points={chartPoints} />
     </section>

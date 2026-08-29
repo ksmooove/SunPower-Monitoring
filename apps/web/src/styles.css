@@ -344,6 +344,20 @@ input {
   background: color-mix(in srgb, var(--panel) 90%, transparent);
 }
 
+.chart-controls {
+  margin-top: 1.25rem;
+}
+
+.chart-controls h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.chart-period-control {
+  margin-bottom: 0;
+}
+
 .production-period-control input {
   min-width: 9rem;
   border: 1px solid var(--line);
