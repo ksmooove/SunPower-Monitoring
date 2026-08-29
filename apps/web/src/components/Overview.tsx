@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { DaySummary } from "../api";
 
 type Point = { time: string; value: number };
@@ -15,9 +15,11 @@ function formatKwh(n: number | null | undefined): string {
 export function TodaysProduction({
   summary,
   pv,
+  points,
 }: {
   summary: DaySummary | null;
   pv: number | null;
+  points: Point[];
 }) {
   return (
     <section className="section">
@@ -41,20 +43,20 @@ export function TodaysProduction({
           <div className="meta">Highest today</div>
         </article>
       </div>
+      <DayChart points={points} />
     </section>
   );
 }
 
 export function DayChart({
   points,
-  hours,
 }: {
   points: Point[];
-  hours: number;
 }) {
-  const { path, area, maxY, labels } = useMemo(() => {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const { path, area, maxY, labels, coords } = useMemo(() => {
     if (points.length === 0) {
-      return { path: "", area: "", maxY: 1, labels: [] as string[] };
+      return { path: "", area: "", maxY: 1, labels: [] as string[], coords: [] as Array<readonly [number, number]> };
     }
     const values = points.map((p) => p.value);
     const maxY = Math.max(...values, 0.1);
@@ -70,45 +72,29 @@ export function DayChart({
       .map((c, i) => `${i === 0 ? "M" : "L"}${c[0].toFixed(1)},${c[1].toFixed(1)}`)
       .join(" ");
     const area = `${path} L${coords.at(-1)![0].toFixed(1)},${h - pad} L${coords[0][0].toFixed(1)},${h - pad} Z`;
-    const fmt = (iso: string) => {
-      const d = new Date(iso);
-      if (hours > 48) {
-        return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric" });
-      }
-      return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    };
+    const fmt = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     const labels = [
       fmt(points[0].time),
       fmt(points[Math.floor(points.length / 2)].time),
       fmt(points.at(-1)!.time),
     ];
-    return { path, area, maxY, labels };
-  }, [points, hours]);
-
-  const spanHours =
-    points.length >= 2
-      ? (new Date(points.at(-1)!.time).getTime() - new Date(points[0].time).getTime()) /
-        3_600_000
-      : 0;
+    return { path, area, maxY, labels, coords };
+  }, [points]);
 
   return (
-    <section className="section">
-      <h2>Production chart</h2>
-      <div className="panel chart-wrap">
-        <p className="muted" style={{ marginTop: 0 }}>
-          Requested window: last {hours === 168 ? "7 days" : `${hours} hours`} · {points.length}{" "}
-          point{points.length === 1 ? "" : "s"}
-          {points.length >= 2
-            ? ` · data spans ~${spanHours.toFixed(1)} h (chart only shows samples we have stored)`
-            : ""}
-        </p>
+    <div className="panel chart-wrap">
         {points.length < 2 ? (
           <p className="muted">
             Not enough history yet. The collector stores one sample every poll (~5 min). Longer
             ranges will look the same until more time has accumulated.
           </p>
         ) : (
-          <svg viewBox="0 0 640 240" role="img" aria-label="Solar production over time">
+          <svg
+            viewBox="0 0 640 240"
+            role="img"
+            aria-label="Solar production over today's calendar day"
+            onMouseLeave={() => setHovered(null)}
+          >
             <defs>
               <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.45" />
@@ -123,6 +109,18 @@ export function DayChart({
               strokeWidth="2.5"
               strokeLinejoin="round"
             />
+            {coords.map(([x, y], index) => (
+              <circle
+                key={points[index].time}
+                cx={x}
+                cy={y}
+                r={hovered === index ? 6 : 4}
+                fill="var(--accent)"
+                stroke="var(--panel)"
+                strokeWidth="2"
+                onMouseEnter={() => setHovered(index)}
+              />
+            ))}
             <text x="16" y="18" fill="var(--muted)" fontSize="12">
               max {maxY.toFixed(2)} kW
             </text>
@@ -137,7 +135,12 @@ export function DayChart({
             </text>
           </svg>
         )}
-      </div>
-    </section>
+        {hovered != null && points[hovered] && (
+          <div className="chart-tooltip">
+            <strong>{formatKw(points[hovered].value)}</strong>
+            <span>{new Date(points[hovered].time).toLocaleString()}</span>
+          </div>
+        )}
+    </div>
   );
 }

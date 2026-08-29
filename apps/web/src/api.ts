@@ -200,6 +200,7 @@ export const api = {
     apiFetch<HistoryResponse>(
       `/v1/history?metric=${encodeURIComponent(metric)}&device_type=site&pvs_path_id=livedata&hours=${hours}`,
     ),
+  todayHistory: () => apiFetch<HistoryResponse>("/v1/today-history"),
   updateLayout: (deviceId: string, body: { grid_row?: number; grid_col?: number; name?: string }) =>
     apiFetch<{ device: Device }>(`/v1/devices/${deviceId}/layout`, {
       method: "PATCH",

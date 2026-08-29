@@ -402,6 +402,41 @@ async def history(
     }
 
 
+@app.get("/v1/today-history", dependencies=[Depends(require_auth)])
+async def today_history(
+    repo: Annotated[Repository, Depends(get_repo)],
+) -> dict[str, Any]:
+    zone = ZoneInfo(settings.site_timezone)
+    now = datetime.now(zone)
+    start = datetime.combine(now.date(), datetime.min.time(), tzinfo=zone).astimezone(timezone.utc)
+    end = now.astimezone(timezone.utc)
+    rows = await repo.history(
+        metric="pv_power_kw",
+        device_type="site",
+        pvs_path_id="livedata",
+        start=start,
+        end=end,
+        limit=20000,
+    )
+
+    def conv(obj: Any) -> Any:
+        if isinstance(obj, list):
+            return [conv(x) for x in obj]
+        if isinstance(obj, dict):
+            return {k: conv(v) for k, v in obj.items()}
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return obj
+
+    return {
+        "metric": "pv_power_kw",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "count": len(rows),
+        "points": conv(rows),
+    }
+
+
 @app.get("/v1/export.csv", dependencies=[Depends(require_auth)])
 async def export_csv(
     repo: Annotated[Repository, Depends(get_repo)],

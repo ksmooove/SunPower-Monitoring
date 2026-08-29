@@ -14,7 +14,7 @@ import {
   type ProductionHistoryResponse,
   type ProductionRange,
 } from "./api";
-import { DayChart, TodaysProduction } from "./components/Overview";
+import { TodaysProduction } from "./components/Overview";
 import { PowerFlow } from "./components/PowerFlow";
 import { Heatmap } from "./components/Heatmap";
 import { ProductionHistory } from "./components/ProductionHistory";
@@ -57,11 +57,9 @@ export default function App() {
   const [playback, setPlayback] = useState<PlaybackResponse | null>(null);
   const [devices, setDevices] = useState<Device[]>([]);
   const [history, setHistory] = useState<Array<{ time: string; value: number }>>([]);
-  const [hours, setHours] = useState(24);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [csvBusy, setCsvBusy] = useState(false);
   const [tokenInput, setTokenInput] = useState(getApiToken());
 
   function changeProductionRange(range: ProductionRange) {
@@ -86,7 +84,7 @@ export default function App() {
         api.health(),
         api.current(),
         api.devices(),
-        api.history("pv_power_kw", hours),
+        api.todayHistory(),
         api.daySummary(),
         api.playback(24),
         api.productionHistory(productionRange, productionPeriod),
@@ -113,7 +111,7 @@ export default function App() {
     } finally {
       setRefreshing(false);
     }
-  }, [hours, panelPeriod, panelRange, productionPeriod, productionRange]);
+  }, [panelPeriod, panelRange, productionPeriod, productionRange]);
 
   useEffect(() => {
     void refresh();
@@ -135,18 +133,6 @@ export default function App() {
       : offline
         ? "warn"
         : "ok";
-
-  async function onDownloadCsv() {
-    setCsvBusy(true);
-    setError(null);
-    try {
-      await api.downloadCsv(hours);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "CSV download failed");
-    } finally {
-      setCsvBusy(false);
-    }
-  }
 
   return (
     <div className="app">
@@ -196,6 +182,7 @@ export default function App() {
       <TodaysProduction
         summary={daySummary}
         pv={metricValue(current, "pv_power_kw")}
+        points={history}
       />
 
       <ProductionHistory
@@ -211,26 +198,6 @@ export default function App() {
         load={metricValue(current, "site_load_power_kw")}
         net={metricValue(current, "net_power_kw")}
       />
-
-      <section className="section">
-        <div className="toolbar">
-          {[24, 48, 168].map((h) => (
-            <button
-              key={h}
-              type="button"
-              className={hours === h ? "active" : undefined}
-              onClick={() => setHours(h)}
-            >
-              {h === 168 ? "7d" : `${h}h`}
-            </button>
-          ))}
-          <button type="button" className="button" disabled={csvBusy} onClick={() => void onDownloadCsv()}>
-            {csvBusy ? "Downloading…" : "Download CSV"}
-          </button>
-        </div>
-      </section>
-
-      <DayChart points={history} hours={hours} />
 
       {current && (
         <Heatmap

@@ -189,6 +189,7 @@ input {
 }
 
 .chart-wrap {
+  position: relative;
   width: 100%;
   overflow: hidden;
 }
@@ -197,6 +198,26 @@ input {
   width: 100%;
   height: auto;
   display: block;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+.chart-tooltip span {
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .heatmap-grid {
