@@ -321,7 +321,9 @@ class Repository:
                 continue
 
             if start is None:
-                values[pvs_path_id] = round(float(samples[-1][1]), 3)
+                # Lifetime counters can briefly report a lower value after a
+                # device reset. Preserve the highest observed lifetime total.
+                values[pvs_path_id] = round(max(value for _, value in samples), 3)
             else:
                 values[pvs_path_id] = compute_inverter_energy_delta(samples, start, end)
 

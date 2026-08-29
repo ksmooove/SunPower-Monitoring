@@ -161,22 +161,23 @@ export function PowerFlow({
         <p className="muted" style={{ marginTop: 0 }}>
           Instantaneous power between solar, home, and grid. Dashes and arrows move with the flow.
         </p>
-        {!model ? (
-          <p className="muted">Waiting for live power readings…</p>
-        ) : (
-          <div className="power-flow-stage">
-            <img
-              className="power-flow-scene"
-              src="/images/power-flow-scene-landscape.svg"
-              alt="Generic home energy flow scene"
-              draggable={false}
-            />
-            <svg
-              className="power-flow-overlay"
-              viewBox="0 0 1350 900"
-              role="img"
-              aria-label="Animated live power flow between solar, home, and grid"
-            >
+        <div className="power-flow-stage">
+          <img
+            className="power-flow-scene"
+            src="/images/power-flow-scene-landscape.svg"
+            alt="Generic home energy flow scene"
+            draggable={false}
+          />
+          {!model ? (
+            <p className="muted flow-empty-state">Waiting for live power readings…</p>
+          ) : (
+            <>
+              <svg
+                className="power-flow-overlay"
+                viewBox="0 0 1350 900"
+                role="img"
+                aria-label="Animated live power flow between solar, home, and grid"
+              >
               <defs>
                 <filter id="flow-glow" x="-50%" y="-50%" width="200%" height="200%">
                   <feGaussianBlur stdDeviation="2.2" result="blur" />
@@ -276,7 +277,7 @@ export function PowerFlow({
                   </g>
                 );
               })}
-            </svg>
+              </svg>
 
             <div className="flow-badge flow-badge-solar">
               <span className="flow-badge-title">Solar production</span>
@@ -300,8 +301,9 @@ export function PowerFlow({
               </span>
               <span className="flow-badge-value">{formatKw(model.gridAbs)}</span>
             </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </section>
   );
