@@ -486,7 +486,9 @@ class Repository:
         """
         Return generated solar energy for each local calendar day.
 
-        Energy is calculated from the pv_energy_kwh cumulative counter:
+        When SunPower PDF daily production is available for a date, it is treated
+        as authoritative. Otherwise, energy is calculated from the pv_energy_kwh
+        cumulative counter:
 
             last reading of local day
             -
@@ -578,18 +580,19 @@ class Repository:
 
             generated_kwh = None
 
-            if sufficient_samples:
+            local_date = row["local_date"]
+            historical = historical_by_date.pop(local_date, None)
+
+            if historical is not None:
+                # SunPower PDF daily production is authoritative when available.
+                generated_kwh = float(historical["energy_kwh"])
+                sufficient_samples = True
+            elif sufficient_samples:
                 generated_kwh = max(
                     0.0,
                     float(last_value) - float(first_value),
                 )
-
-            local_date = row["local_date"]
-            historical = historical_by_date.pop(local_date, None)
-            if generated_kwh is None and historical is not None:
-                generated_kwh = float(historical["energy_kwh"])
-                sufficient_samples = True
-
+            
             result.append({
                 "date": local_date.isoformat(),
                 "generated_kwh": generated_kwh,
